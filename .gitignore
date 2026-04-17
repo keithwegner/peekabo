@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local/generated run outputs
+runs/
+examples/captures/
+
+# Local wireless captures
+*.pcap
+*.pcapng
+*.cap
+
+# OS/editor
+.DS_Store
+*.swp
