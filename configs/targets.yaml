@@ -1,0 +1,12 @@
+targets:
+  - target_id: iphone_5_user1
+    label: phone
+    mac_addresses:
+      - aa:bb:cc:dd:ee:ff
+    enabled: true
+  - target_id: lg_tv
+    label: tv
+    mac_addresses:
+      - 11:22:33:44:55:66
+    enabled: true
+
