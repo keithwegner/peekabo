@@ -9,7 +9,10 @@ from peekabo.models.base import OnlineModel
 MODEL_MAPPINGS = {
     "leveraging_bag": "river.ensemble.LeveragingBaggingClassifier(HoeffdingTreeClassifier)",
     "oza_boost": "river.ensemble.AdaBoostClassifier(HoeffdingTreeClassifier)",
-    "oza_boost_adwin": "river.ensemble.ADWINBoostingClassifier(HoeffdingTreeClassifier), falling back to ADWINBaggingClassifier when unavailable",
+    "oza_boost_adwin": (
+        "river.ensemble.ADWINBoostingClassifier(HoeffdingTreeClassifier), "
+        "falling back to ADWINBaggingClassifier when unavailable"
+    ),
     "adaptive_hoeffding_tree": "river.tree.HoeffdingAdaptiveTreeClassifier",
 }
 

@@ -31,7 +31,10 @@ def passes_filters(
     if not config.include_ap_originated and is_ap_originated(row, config):
         return False
 
-    if config.channel_frequency is not None and row.get("channel_frequency") != config.channel_frequency:
+    if (
+        config.channel_frequency is not None
+        and row.get("channel_frequency") != config.channel_frequency
+    ):
         return False
 
     timestamp = row.get("timestamp")
@@ -70,4 +73,3 @@ def _parse_time(value: float | str) -> float:
     if isinstance(value, (float, int)):
         return float(value)
     return datetime.fromisoformat(value).timestamp()
-

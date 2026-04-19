@@ -13,7 +13,7 @@ def write_confusion_matrix_csv(path: str | Path, metrics: dict[str, Any]) -> Non
     labels = metrics["confusion_matrix"]["labels"]
     matrix = metrics["confusion_matrix"]["matrix"]
     lines = ["," + ",".join(labels)]
-    for label, row in zip(labels, matrix):
+    for label, row in zip(labels, matrix, strict=True):
         lines.append(",".join([label, *[str(value) for value in row]]))
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -51,7 +51,6 @@ def plot_binary_curves(
     positive_label: str = "target",
 ) -> None:
     try:
-        import matplotlib.pyplot as plt  # type: ignore
         from sklearn.metrics import precision_recall_curve, roc_curve  # type: ignore
     except Exception as exc:  # pragma: no cover - dependency availability
         raise RuntimeError("matplotlib and scikit-learn are required for ROC/PR plots") from exc
@@ -71,7 +70,14 @@ def plot_binary_curves(
     fpr, tpr, _ = roc_curve(y_true, y_score)
     precision, recall, _ = precision_recall_curve(y_true, y_score)
 
-    _line_plot(roc_path, fpr, tpr, xlabel="False positive rate", ylabel="True positive rate", title="ROC Curve")
+    _line_plot(
+        roc_path,
+        fpr,
+        tpr,
+        xlabel="False positive rate",
+        ylabel="True positive rate",
+        title="ROC Curve",
+    )
     _line_plot(pr_path, recall, precision, xlabel="Recall", ylabel="Precision", title="PR Curve")
 
 

@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest a scoped improvement for peekabo.
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow or limitation should this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the desired behavior, CLI/API shape, or output.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider?
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety fit
+      options:
+        - label: This request preserves passive-only behavior.
+          required: true
+        - label: This request does not require payload inspection or decryption.
+          required: true

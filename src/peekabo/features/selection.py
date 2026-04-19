@@ -5,8 +5,9 @@ from __future__ import annotations
 import math
 import random
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from peekabo.data.readers import iter_rows
 from peekabo.data.writers import write_json
@@ -24,7 +25,9 @@ def rank_feature_file(
     output_markdown: str | Path | None = None,
 ) -> list[dict[str, Any]]:
     rows = list(_sample_rows(iter_rows(input_path), sample_size=sample_size, seed=seed))
-    feature_names = features or [name for name in DEFAULT_MODEL_FEATURES if rows and name in rows[0]]
+    feature_names = features or [
+        name for name in DEFAULT_MODEL_FEATURES if rows and name in rows[0]
+    ]
     ranked = [
         {"feature": feature, "score": mutual_information(rows, feature, label_column)}
         for feature in feature_names

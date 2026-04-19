@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 from peekabo.parsing.dot11 import parse_packet_to_record
 from peekabo.parsing.radiotap import extract_radiotap_fields
@@ -34,4 +34,3 @@ def iter_live_records(
         radiotap = extract_radiotap_fields(packet)
         yield parse_packet_to_record(packet, f"live:{interface}", index, radiotap)
         index += 1
-

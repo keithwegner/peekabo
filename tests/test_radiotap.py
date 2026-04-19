@@ -16,4 +16,3 @@ def test_extract_radiotap_fields_from_layer():
     assert fields["channel_frequency"] == 2412
     assert fields["rssi"] == -48.0
     assert fields["ssi"] == 32.0
-

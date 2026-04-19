@@ -7,7 +7,6 @@ from typing import Any
 
 from peekabo.parsing.records import PacketRecord
 
-
 FRAME_FAMILY_BY_TYPE = {
     0: "management",
     1: "control",
@@ -191,4 +190,3 @@ def parse_packet_to_record(
         retry=dot11_fields.get("retry"),
         protected=dot11_fields.get("protected"),
     )
-

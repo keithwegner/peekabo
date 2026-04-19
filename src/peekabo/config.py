@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
 
 
 class InputConfig(BaseModel):
-    paths: List[Path] = Field(default_factory=list)
-    live_interface: Optional[str] = None
+    paths: list[Path] = Field(default_factory=list)
+    live_interface: str | None = None
 
 
 class FeatureConfig(BaseModel):
@@ -26,7 +26,7 @@ class FeatureConfig(BaseModel):
 
 class LabelConfig(BaseModel):
     mode: str = "binary_one_vs_rest"
-    target_id: Optional[str] = None
+    target_id: str | None = None
     positive_label: str = "target"
     negative_label: str = "other"
 
@@ -37,19 +37,19 @@ class FilterConfig(BaseModel):
     include_management: bool = True
     include_control: bool = True
     include_data: bool = True
-    channel_frequency: Optional[int] = None
-    start_time: Optional[Union[float, str]] = None
-    end_time: Optional[Union[float, str]] = None
-    rssi_min: Optional[float] = None
-    rssi_max: Optional[float] = None
-    min_frame_size: Optional[int] = None
-    ap_macs: List[str] = Field(default_factory=list)
+    channel_frequency: int | None = None
+    start_time: float | str | None = None
+    end_time: float | str | None = None
+    rssi_min: float | None = None
+    rssi_max: float | None = None
+    min_frame_size: int | None = None
+    ap_macs: list[str] = Field(default_factory=list)
 
 
 class ModelConfig(BaseModel):
     model_id: str = "leveraging_bag"
     checkpoint_path: Path = Path("runs/model.pkl")
-    params: Dict[str, Any] = Field(default_factory=dict)
+    params: dict[str, Any] = Field(default_factory=dict)
 
 
 class DataConfig(BaseModel):
@@ -85,7 +85,7 @@ class WindowConfig(BaseModel):
 
 class AppConfig(BaseModel):
     input: InputConfig = Field(default_factory=InputConfig)
-    target_registry_path: Optional[Path] = None
+    target_registry_path: Path | None = None
     output_dir: Path = Path("runs/default")
     random_seed: int = 42
     features: FeatureConfig = Field(default_factory=FeatureConfig)
@@ -98,19 +98,19 @@ class AppConfig(BaseModel):
     windowing: WindowConfig = Field(default_factory=WindowConfig)
 
 
-def _validate_config(data: Dict[str, Any]) -> AppConfig:
+def _validate_config(data: dict[str, Any]) -> AppConfig:
     if hasattr(AppConfig, "model_validate"):
         return AppConfig.model_validate(data)  # type: ignore[attr-defined]
     return AppConfig.parse_obj(data)
 
 
-def config_to_dict(config: AppConfig) -> Dict[str, Any]:
+def config_to_dict(config: AppConfig) -> dict[str, Any]:
     if hasattr(config, "model_dump"):
         return config.model_dump(mode="json")  # type: ignore[attr-defined]
     return config.dict()
 
 
-def load_config(path: Union[str, Path]) -> AppConfig:
+def load_config(path: str | Path) -> AppConfig:
     config_path = Path(path)
     with config_path.open("r", encoding="utf-8") as handle:
         if config_path.suffix.lower() == ".json":
@@ -120,7 +120,7 @@ def load_config(path: Union[str, Path]) -> AppConfig:
     return _validate_config(data)
 
 
-def write_run_config(config: AppConfig, output_dir: Union[str, Path]) -> Path:
+def write_run_config(config: AppConfig, output_dir: str | Path) -> Path:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     run_config = output_path / "run_config.json"

@@ -17,7 +17,7 @@ def classification_metrics(
     labels = sorted(set(y_true) | set(y_pred))
     matrix = confusion_matrix(y_true, y_pred, labels)
     total = len(y_true)
-    correct = sum(1 for truth, pred in zip(y_true, y_pred) if truth == pred)
+    correct = sum(1 for truth, pred in zip(y_true, y_pred, strict=True) if truth == pred)
     accuracy = correct / total if total else 0.0
 
     per_class = per_class_metrics(matrix, labels)
@@ -47,7 +47,7 @@ def classification_metrics(
 def confusion_matrix(y_true: list[str], y_pred: list[str], labels: list[str]) -> list[list[int]]:
     index = {label: idx for idx, label in enumerate(labels)}
     matrix = [[0 for _ in labels] for _ in labels]
-    for truth, pred in zip(y_true, y_pred):
+    for truth, pred in zip(y_true, y_pred, strict=True):
         matrix[index[truth]][index[pred]] += 1
     return matrix
 
@@ -113,7 +113,9 @@ def binary_auc_metrics(
 
 
 def class_distribution(rows: list[dict[str, Any]], label_column: str = "label") -> dict[str, int]:
-    return dict(Counter(str(row[label_column]) for row in rows if row.get(label_column) is not None))
+    return dict(
+        Counter(str(row[label_column]) for row in rows if row.get(label_column) is not None)
+    )
 
 
 def _primary_precision_recall_f1(
@@ -127,8 +129,9 @@ def _primary_precision_recall_f1(
     total_support = sum(item["support"] for item in per_class.values())
     if total_support == 0:
         return 0.0, 0.0, 0.0
-    precision = sum(item["precision"] * item["support"] for item in per_class.values()) / total_support
+    precision = (
+        sum(item["precision"] * item["support"] for item in per_class.values()) / total_support
+    )
     recall = sum(item["recall"] * item["support"] for item in per_class.values()) / total_support
     f1 = sum(item["f1"] * item["support"] for item in per_class.values()) / total_support
     return precision, recall, f1
-

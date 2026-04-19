@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 from peekabo.config import LabelConfig
 from peekabo.labeling.targets import TargetRegistry
@@ -18,12 +19,16 @@ def label_for_row(
     if config.mode == "binary_one_vs_rest":
         if config.target_id is None:
             return config.positive_label if source_target_id is not None else config.negative_label
-        return config.positive_label if source_target_id == config.target_id else config.negative_label
+        return (
+            config.positive_label if source_target_id == config.target_id else config.negative_label
+        )
 
     if config.mode == "per_target_binary":
         if config.target_id is None:
             raise ValueError("per_target_binary requires labeling.target_id")
-        return config.positive_label if source_target_id == config.target_id else config.negative_label
+        return (
+            config.positive_label if source_target_id == config.target_id else config.negative_label
+        )
 
     if config.mode == "multiclass_known_targets_only":
         return source_target_id
@@ -48,4 +53,3 @@ def iter_labeled_rows(
         output["source_target_id"] = registry.target_id_for_mac(row.get("source_mac"))
         output["label_mode"] = config.mode
         yield output
-

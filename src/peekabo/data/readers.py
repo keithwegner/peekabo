@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 
 def iter_rows(path: str | Path, *, batch_size: int = 65_536) -> Iterator[dict[str, Any]]:
@@ -66,6 +67,4 @@ def _iter_parquet_rows(path: Path, *, batch_size: int) -> Iterator[dict[str, Any
 
     parquet_file = pq.ParquetFile(path)
     for batch in parquet_file.iter_batches(batch_size=batch_size):
-        for row in batch.to_pylist():
-            yield row
-
+        yield from batch.to_pylist()

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import random
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from peekabo.data.readers import iter_rows, read_all_rows
 from peekabo.data.writers import write_rows

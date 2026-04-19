@@ -8,4 +8,3 @@ def test_cli_help_smoke():
     assert result.exit_code == 0
     assert "ingest" in result.output
     assert "eval-prequential" in result.output
-

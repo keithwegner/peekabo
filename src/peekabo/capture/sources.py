@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 from peekabo.parsing.dot11 import parse_packet_to_record
 from peekabo.parsing.radiotap import extract_radiotap_fields
 from peekabo.parsing.records import PacketRecord
-
 
 PCAP_SUFFIXES = {".pcap", ".pcapng", ".cap"}
 

@@ -14,4 +14,3 @@ def test_mac_normalization_and_frame_family():
     assert frame_family(0) == "management"
     assert frame_family(1) == "control"
     assert frame_family(2) == "data"
-

@@ -37,4 +37,3 @@ def extract_radiotap_fields(packet: Any) -> dict[str, Any]:
     if not packet.haslayer(RadioTap):
         return defaults
     return defaults | extract_radiotap_fields_from_layer(packet[RadioTap])
-

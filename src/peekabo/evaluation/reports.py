@@ -36,7 +36,10 @@ def write_markdown_report(
         "",
         "## Model Mapping",
         "",
-        f"`{config.model.model_id}` maps to `{MODEL_MAPPINGS.get(config.model.model_id, 'unknown')}`.",
+        (
+            f"`{config.model.model_id}` maps to "
+            f"`{MODEL_MAPPINGS.get(config.model.model_id, 'unknown')}`."
+        ),
     ]
     if config.features.leakage_debug:
         lines.extend(
@@ -44,7 +47,10 @@ def write_markdown_report(
                 "",
                 "## Leakage Debug Warning",
                 "",
-                "This run included MAC-derived model features and should not be treated as a faithful reproduction run.",
+                (
+                    "This run included MAC-derived model features and should not be treated "
+                    "as a faithful reproduction run."
+                ),
             ]
         )
     if _severe_skew(metrics):
@@ -53,13 +59,26 @@ def write_markdown_report(
                 "",
                 "## Imbalance Warning",
                 "",
-                "The class distribution is severely skewed; accuracy is less informative than precision, recall, F1, MCC, ROC AUC, and PR AUC.",
+                (
+                    "The class distribution is severely skewed; accuracy is less informative "
+                    "than precision, recall, F1, MCC, ROC AUC, and PR AUC."
+                ),
             ]
         )
-    lines.extend(["", "## Per-Class Metrics", "", "| Class | Precision | Recall | F1 | Support |", "| --- | --- | --- | --- | --- |"])
+    lines.extend(
+        [
+            "",
+            "## Per-Class Metrics",
+            "",
+            "| Class | Precision | Recall | F1 | Support |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
     for label, item in (metrics.get("per_class") or {}).items():
         lines.append(
-            f"| `{label}` | {_fmt(item.get('precision'))} | {_fmt(item.get('recall'))} | {_fmt(item.get('f1'))} | {int(item.get('support', 0))} |"
+            f"| `{label}` | {_fmt(item.get('precision'))} | "
+            f"{_fmt(item.get('recall'))} | {_fmt(item.get('f1'))} | "
+            f"{int(item.get('support', 0))} |"
         )
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -79,4 +98,3 @@ def _severe_skew(metrics: dict[str, Any]) -> bool:
     smallest = min(supports)
     largest = max(supports)
     return bool(smallest and largest / smallest >= 10)
-
