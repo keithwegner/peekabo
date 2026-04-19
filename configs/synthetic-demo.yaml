@@ -37,6 +37,8 @@ model:
   checkpoint_path: runs/synthetic-demo/model.pkl
   params:
     n_models: 5
+    base_model:
+      grace_period: 5
 
 data:
   normalized_path: runs/synthetic-demo/records.parquet
@@ -54,13 +56,13 @@ sampling:
   class_weight_column: sample_weight
 
 split:
-  train_fraction: 0.9
+  train_fraction: 0.75
   chronological: true
 
 windowing:
-  frame_count: 100
-  time_seconds: 30
+  frame_count: 20
+  time_seconds: 20
   min_frames: 5
-  present_ratio_threshold: 0.5
-  mean_probability_threshold: 0.5
+  present_ratio_threshold: 0.3
+  mean_probability_threshold: 0.3
   max_probability_threshold: 0.8

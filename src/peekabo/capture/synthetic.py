@@ -11,8 +11,8 @@ UNKNOWN_MAC = "22:33:44:55:66:77"
 INTERNET_MAC = "ff:ff:ff:ff:ff:ff"
 
 
-def write_synthetic_capture(path: str | Path) -> Path:
-    """Write a tiny passive-safe Radiotap/Dot11 PCAP fixture."""
+def write_synthetic_capture(path: str | Path, *, packet_count: int = 120) -> Path:
+    """Write a deterministic passive-safe Radiotap/Dot11 PCAP fixture."""
     try:
         from scapy.layers.dot11 import Dot11, RadioTap  # type: ignore
         from scapy.packet import Raw  # type: ignore
@@ -22,15 +22,9 @@ def write_synthetic_capture(path: str | Path) -> Path:
 
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    packet_specs = [
-        (IPHONE_MAC, INTERNET_MAC, -41, 24, 12),
-        (LG_TV_MAC, INTERNET_MAC, -55, 18, 24),
-        (UNKNOWN_MAC, INTERNET_MAC, -67, 12, 36),
-        (IPHONE_MAC, INTERNET_MAC, -44, 36, 48),
-        (LG_TV_MAC, INTERNET_MAC, -53, 24, 60),
-    ]
     packets = []
-    for index, (source_mac, destination_mac, rssi, rate, payload_len) in enumerate(packet_specs):
+    for index in range(packet_count):
+        source_mac, destination_mac, rssi, rate, subtype, payload_len = _packet_spec(index)
         packet = (
             RadioTap(
                 present="Rate+Channel+dBm_AntSignal",
@@ -41,7 +35,7 @@ def write_synthetic_capture(path: str | Path) -> Path:
             )
             / Dot11(
                 type=2,
-                subtype=0,
+                subtype=subtype,
                 FCfield=0x41,
                 addr1=AP_MAC,
                 addr2=source_mac,
@@ -55,3 +49,32 @@ def write_synthetic_capture(path: str | Path) -> Path:
 
     wrpcap(str(output), packets)
     return output
+
+
+def _packet_spec(index: int) -> tuple[str, str, int, int, int, int]:
+    if index % 3 == 0:
+        return (
+            IPHONE_MAC,
+            INTERNET_MAC,
+            -38 - (index % 5),
+            54 if index % 2 else 48,
+            0,
+            72 + (index % 4) * 4,
+        )
+    if index % 3 == 1:
+        return (
+            LG_TV_MAC,
+            INTERNET_MAC,
+            -63 - (index % 4),
+            12 if index % 2 else 18,
+            4,
+            24 + (index % 3) * 3,
+        )
+    return (
+        UNKNOWN_MAC,
+        INTERNET_MAC,
+        -72 - (index % 6),
+        6 if index % 2 else 9,
+        8,
+        36 + (index % 5) * 2,
+    )
