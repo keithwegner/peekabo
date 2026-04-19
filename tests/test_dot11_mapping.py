@@ -1,4 +1,4 @@
-from peekabo.parsing.dot11 import frame_family, map_logical_addresses, normalize_mac
+from peekaboo.parsing.dot11 import frame_family, map_logical_addresses, normalize_mac
 
 
 def test_logical_address_mapping_by_ds_bits():

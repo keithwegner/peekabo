@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in peekabo.
+description: Report a reproducible problem in peekaboo.
 title: "[bug] "
 labels:
   - bug
@@ -21,7 +21,7 @@ body:
       label: Steps to reproduce
       description: Include the command, config shape, and any synthetic fixture details needed to reproduce.
       placeholder: |
-        1. Run `peekabo ...`
+        1. Run `peekaboo ...`
         2. Observe ...
     validations:
       required: true
@@ -40,7 +40,7 @@ body:
       placeholder: |
         - OS:
         - Python:
-        - peekabo version/commit:
+        - peekaboo version/commit:
     validations:
       required: true
   - type: textarea

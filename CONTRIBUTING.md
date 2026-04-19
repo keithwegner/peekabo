@@ -1,6 +1,6 @@
 # Contributing
 
-`peekabo` is a passive-only tool for analyzing unencrypted 802.11 metadata. Contributions should preserve that boundary: no decryption, packet injection, active probing, or payload inspection.
+`peekaboo` is a passive-only tool for analyzing unencrypted 802.11 metadata. Contributions should preserve that boundary: no decryption, packet injection, active probing, or payload inspection.
 
 ## Setup
 

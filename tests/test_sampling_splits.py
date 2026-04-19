@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from peekabo.data.readers import read_all_rows
-from peekabo.data.sampling import balance_file, random_sample_file
-from peekabo.data.splits import chronological_split_file, holdout_split_file
-from peekabo.data.writers import write_rows
+from peekaboo.data.readers import read_all_rows
+from peekaboo.data.sampling import balance_file, random_sample_file
+from peekaboo.data.splits import chronological_split_file, holdout_split_file
+from peekaboo.data.writers import write_rows
 
 
 def rows():

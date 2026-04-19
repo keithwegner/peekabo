@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from peekabo.cli import app
+from peekaboo.cli import app
 
 
 def test_cli_help_smoke():
