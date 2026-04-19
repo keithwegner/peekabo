@@ -20,8 +20,14 @@ def main() -> None:
         default=REPO_ROOT / "examples" / "captures" / "synthetic-demo.pcap",
         help="Output PCAP path.",
     )
+    parser.add_argument(
+        "--packet-count",
+        type=int,
+        default=120,
+        help="Number of synthetic packets to generate.",
+    )
     args = parser.parse_args()
-    output = write_synthetic_capture(args.output)
+    output = write_synthetic_capture(args.output, packet_count=args.packet_count)
     print(f"Wrote synthetic capture to {output}")
 
 

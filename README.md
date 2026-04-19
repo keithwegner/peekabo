@@ -28,16 +28,33 @@ If `ingest` reports that no capture files were found, check that the configured 
 
 ## Try It With Synthetic Data
 
-The repository includes a generator for a tiny synthetic Radiotap/802.11 capture. It contains fake MAC addresses and fake frame metadata, so it is safe to use as a first-run demo.
+The repository includes a generator for a deterministic synthetic Radiotap/802.11 capture. It contains fake MAC addresses and fake frame metadata, so it is safe to use as a first-run demo. The synthetic traffic is intentionally learnable from allowed header-level features such as rate, signal, subtype, and frame size; it is not real-world performance evidence.
 
 ```bash
 python examples/generate_synthetic_capture.py
 peekabo ingest --config configs/synthetic-demo.yaml
 peekabo features --config configs/synthetic-demo.yaml
 peekabo label --config configs/synthetic-demo.yaml
+peekabo split --config configs/synthetic-demo.yaml
+peekabo train-online --config configs/synthetic-demo.yaml
+peekabo eval-holdout --config configs/synthetic-demo.yaml
+peekabo classify-file --config configs/synthetic-demo.yaml
+peekabo report --config configs/synthetic-demo.yaml
 ```
 
 The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
+
+After the full demo, `runs/synthetic-demo/` should include:
+
+- `records.parquet`: normalized Radiotap/Dot11 packet records
+- `features.parquet`: paper feature rows with MACs retained for labeling/reporting
+- `labeled.parquet`: binary `target` vs. `other` labels
+- `train.parquet` and `test.parquet`: chronological holdout split
+- `model.pkl`: online model checkpoint
+- `metrics.json`: holdout evaluation metrics
+- `predictions.parquet`: per-frame predictions
+- `rolling.parquet`: rolling target-presence summaries
+- `report.md`: Markdown experiment report
 
 ## Faithful Feature Policy
 

@@ -281,7 +281,7 @@ def classify_file(
     pred_path = predictions_output or cfg.data.predictions_path
     roll_path = rolling_output or cfg.data.rolling_path
     write_rows(pred_path, predictions)
-    target = target_class or cfg.labeling.target_id or cfg.labeling.positive_label
+    target = target_class or _default_rolling_target_class(cfg)
     rolling = rolling_aggregates(predictions, target_class=target, config=cfg.windowing)
     write_rows(roll_path, rolling)
     typer.echo(f"Wrote {len(predictions)} predictions and {len(rolling)} rolling rows")
@@ -335,6 +335,12 @@ def _target_registry(cfg: AppConfig) -> TargetRegistry:
 
 def _write_run_config(cfg: AppConfig) -> None:
     write_run_config(cfg, cfg.output_dir)
+
+
+def _default_rolling_target_class(cfg: AppConfig) -> str:
+    if cfg.labeling.mode in {"binary_one_vs_rest", "per_target_binary"}:
+        return cfg.labeling.positive_label
+    return cfg.labeling.target_id or cfg.labeling.positive_label
 
 
 def _write_eval_outputs(
