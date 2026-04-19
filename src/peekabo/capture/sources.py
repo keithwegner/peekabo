@@ -36,6 +36,7 @@ def expand_input_paths(paths: Iterable[str | Path]) -> list[Path]:
 
 def _reader_for_path(path: Path) -> Any:
     try:
+        import scapy.layers.dot11  # noqa: F401  # type: ignore
         from scapy.utils import PcapNgReader, PcapReader  # type: ignore
     except Exception as exc:  # pragma: no cover - dependency availability
         raise RuntimeError("Scapy is required for PCAP ingestion") from exc

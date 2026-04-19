@@ -8,7 +8,7 @@ from typing import Annotated
 import typer
 
 from peekabo.capture.live import iter_live_records
-from peekabo.capture.sources import iter_packet_records
+from peekabo.capture.sources import expand_input_paths, iter_packet_records
 from peekabo.config import AppConfig, load_config, write_run_config
 from peekabo.data.readers import iter_rows
 from peekabo.data.sampling import balance_file, random_sample_file
@@ -44,12 +44,34 @@ def ingest(
     config: ConfigOption,
     input_path: Annotated[list[Path] | None, typer.Option("--input", "-i")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    allow_empty: Annotated[
+        bool,
+        typer.Option(
+            "--allow-empty",
+            help="Write an empty dataset when no capture files are found.",
+        ),
+    ] = False,
 ) -> None:
     cfg = load_config(config)
     paths = input_path or cfg.input.paths
+    capture_paths = expand_input_paths(paths)
+    if not capture_paths:
+        path_list = ", ".join(str(path) for path in paths) or "<none>"
+        message = (
+            "No capture files found for input path(s): "
+            f"{path_list}. Expected .pcap, .pcapng, or .cap files."
+        )
+        if not allow_empty:
+            typer.secho(f"{message} Use --allow-empty to write an empty dataset.", err=True)
+            raise typer.Exit(1)
+        typer.secho(f"{message} Writing empty dataset because --allow-empty was set.", err=True)
+
     output_path = output or cfg.data.normalized_path
     _write_run_config(cfg)
-    count = write_rows(output_path, (record.to_dict() for record in iter_packet_records(paths)))
+    count = write_rows(
+        output_path,
+        (record.to_dict() for record in iter_packet_records(capture_paths)),
+    )
     typer.echo(f"Wrote {count} normalized packet records to {output_path}")
 
 
