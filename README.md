@@ -41,6 +41,7 @@ peekaboo split --config configs/synthetic-demo.yaml
 peekaboo train-online --config configs/synthetic-demo.yaml
 peekaboo eval-holdout --config configs/synthetic-demo.yaml
 peekaboo classify-file --config configs/synthetic-demo.yaml
+peekaboo presence-replay --config configs/synthetic-demo.yaml
 peekaboo report --config configs/synthetic-demo.yaml
 ```
 
@@ -57,6 +58,7 @@ After the full demo, `runs/synthetic-demo/` should include:
 - `metrics.json`: holdout evaluation metrics
 - `predictions.parquet`: per-frame predictions
 - `rolling.parquet`: rolling target-presence summaries
+- `replay_predictions.jsonl` and `replay_presence.jsonl`: live-style replay output
 - `report.md`: Markdown experiment report
 
 ## Faithful Feature Policy
@@ -98,10 +100,14 @@ peekaboo eval-prequential
 peekaboo eval-holdout
 peekaboo classify-file
 peekaboo classify-live
+peekaboo presence-replay
+peekaboo presence-live
 peekaboo report
 ```
 
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.
+
+`presence-live` is also passive-only. It loads a trained checkpoint, reads from an already configured monitor-mode interface, prints concise target-presence state changes, and writes streaming JSONL outputs. Use `presence-replay` on prepared feature rows to test the same runtime behavior without live wireless hardware.
 
 ## Output Artifacts
 
@@ -114,6 +120,7 @@ Typical runs create:
 - model checkpoints
 - per-frame predictions
 - rolling target-presence summaries
+- live/replay prediction and presence JSONL streams
 - JSON/CSV metrics
 - confusion matrices and plots
 - Markdown experiment reports
