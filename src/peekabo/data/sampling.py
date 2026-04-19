@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
+from collections.abc import Iterable, Iterator
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 from peekabo.data.readers import iter_rows, read_all_rows
 from peekabo.data.writers import write_rows
@@ -36,7 +37,9 @@ def random_sample_file(
     percentage: float,
     seed: int,
 ) -> int:
-    return write_rows(output_path, random_sample_rows(iter_rows(input_path), percentage=percentage, seed=seed))
+    return write_rows(
+        output_path, random_sample_rows(iter_rows(input_path), percentage=percentage, seed=seed)
+    )
 
 
 def balance_rows(
@@ -67,7 +70,7 @@ def balance_rows(
     if strategy == "downsample":
         target_count = min(counts.values())
         output: list[dict[str, Any]] = []
-        for label, label_rows in buckets.items():
+        for label_rows in buckets.values():
             output.extend(rng.sample(label_rows, target_count))
         rng.shuffle(output)
         yield from output

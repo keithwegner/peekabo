@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 
@@ -15,7 +15,11 @@ from peekabo.data.sampling import balance_file, random_sample_file
 from peekabo.data.splits import split_file
 from peekabo.data.writers import write_json, write_rows
 from peekabo.evaluation.holdout import evaluate_holdout_rows, train_online_rows
-from peekabo.evaluation.plots import plot_binary_curves, plot_confusion_matrix, write_confusion_matrix_csv
+from peekabo.evaluation.plots import (
+    plot_binary_curves,
+    plot_confusion_matrix,
+    write_confusion_matrix_csv,
+)
 from peekabo.evaluation.prequential import evaluate_prequential_rows
 from peekabo.evaluation.reports import write_markdown_report
 from peekabo.features.extract import iter_feature_rows, model_feature_names
@@ -30,14 +34,16 @@ from peekabo.models.registry import create_model
 
 app = typer.Typer(no_args_is_help=True, help="Passive 802.11 device identification.")
 
-ConfigOption = Annotated[Path, typer.Option("--config", "-c", exists=True, help="YAML config path.")]
+ConfigOption = Annotated[
+    Path, typer.Option("--config", "-c", exists=True, help="YAML config path.")
+]
 
 
 @app.command()
 def ingest(
     config: ConfigOption,
-    input_path: Annotated[Optional[list[Path]], typer.Option("--input", "-i")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
+    input_path: Annotated[list[Path] | None, typer.Option("--input", "-i")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
 ) -> None:
     cfg = load_config(config)
     paths = input_path or cfg.input.paths
@@ -50,8 +56,8 @@ def ingest(
 @app.command("features")
 def features_command(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
 ) -> None:
     cfg = load_config(config)
     source = input_path or cfg.data.normalized_path
@@ -64,8 +70,8 @@ def features_command(
 @app.command()
 def label(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
 ) -> None:
     cfg = load_config(config)
     registry = _target_registry(cfg)
@@ -84,14 +90,16 @@ def label(
 @app.command()
 def sample(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
-    percentage: Annotated[Optional[float], typer.Option("--percentage")] = None,
-    balance_strategy: Annotated[Optional[str], typer.Option("--balance-strategy")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    percentage: Annotated[float | None, typer.Option("--percentage")] = None,
+    balance_strategy: Annotated[str | None, typer.Option("--balance-strategy")] = None,
 ) -> None:
     cfg = load_config(config)
     source = input_path or cfg.data.labeled_path
-    output_path = output or cfg.data.labeled_path.with_name("sampled" + cfg.data.labeled_path.suffix)
+    output_path = output or cfg.data.labeled_path.with_name(
+        "sampled" + cfg.data.labeled_path.suffix
+    )
     strategy = balance_strategy or cfg.sampling.balance_strategy
     if strategy and strategy.lower() not in {"none", "off"}:
         count = balance_file(
@@ -114,9 +122,9 @@ def sample(
 @app.command()
 def split(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    train_output: Annotated[Optional[Path], typer.Option("--train-output")] = None,
-    test_output: Annotated[Optional[Path], typer.Option("--test-output")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    train_output: Annotated[Path | None, typer.Option("--train-output")] = None,
+    test_output: Annotated[Path | None, typer.Option("--test-output")] = None,
 ) -> None:
     cfg = load_config(config)
     train_count, test_count = split_file(
@@ -133,10 +141,10 @@ def split(
 @app.command("feature-rank")
 def feature_rank(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    output_json: Annotated[Optional[Path], typer.Option("--output-json")] = None,
-    output_markdown: Annotated[Optional[Path], typer.Option("--output-markdown")] = None,
-    sample_size: Annotated[Optional[int], typer.Option("--sample-size")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    output_json: Annotated[Path | None, typer.Option("--output-json")] = None,
+    output_markdown: Annotated[Path | None, typer.Option("--output-markdown")] = None,
+    sample_size: Annotated[int | None, typer.Option("--sample-size")] = None,
 ) -> None:
     cfg = load_config(config)
     out_json = output_json or cfg.output_dir / "feature_ranking.json"
@@ -155,9 +163,9 @@ def feature_rank(
 @app.command("train-online")
 def train_online(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    checkpoint: Annotated[Optional[Path], typer.Option("--checkpoint")] = None,
-    model_id: Annotated[Optional[str], typer.Option("--model-id")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
+    model_id: Annotated[str | None, typer.Option("--model-id")] = None,
 ) -> None:
     cfg = load_config(config)
     model = create_model(
@@ -179,10 +187,10 @@ def train_online(
 @app.command("eval-prequential")
 def eval_prequential(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    predictions_output: Annotated[Optional[Path], typer.Option("--predictions-output")] = None,
-    metrics_output: Annotated[Optional[Path], typer.Option("--metrics-output")] = None,
-    model_id: Annotated[Optional[str], typer.Option("--model-id")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
+    metrics_output: Annotated[Path | None, typer.Option("--metrics-output")] = None,
+    model_id: Annotated[str | None, typer.Option("--model-id")] = None,
 ) -> None:
     cfg = load_config(config)
     model = create_model(
@@ -205,11 +213,11 @@ def eval_prequential(
 @app.command("eval-holdout")
 def eval_holdout(
     config: ConfigOption,
-    train_input: Annotated[Optional[Path], typer.Option("--train-input")] = None,
-    test_input: Annotated[Optional[Path], typer.Option("--test-input")] = None,
-    predictions_output: Annotated[Optional[Path], typer.Option("--predictions-output")] = None,
-    metrics_output: Annotated[Optional[Path], typer.Option("--metrics-output")] = None,
-    model_id: Annotated[Optional[str], typer.Option("--model-id")] = None,
+    train_input: Annotated[Path | None, typer.Option("--train-input")] = None,
+    test_input: Annotated[Path | None, typer.Option("--test-input")] = None,
+    predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
+    metrics_output: Annotated[Path | None, typer.Option("--metrics-output")] = None,
+    model_id: Annotated[str | None, typer.Option("--model-id")] = None,
 ) -> None:
     cfg = load_config(config)
     model = create_model(
@@ -233,11 +241,11 @@ def eval_holdout(
 @app.command("classify-file")
 def classify_file(
     config: ConfigOption,
-    input_path: Annotated[Optional[Path], typer.Option("--input", "-i")] = None,
-    checkpoint: Annotated[Optional[Path], typer.Option("--checkpoint")] = None,
-    predictions_output: Annotated[Optional[Path], typer.Option("--predictions-output")] = None,
-    rolling_output: Annotated[Optional[Path], typer.Option("--rolling-output")] = None,
-    target_class: Annotated[Optional[str], typer.Option("--target-class")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
+    predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
+    rolling_output: Annotated[Path | None, typer.Option("--rolling-output")] = None,
+    target_class: Annotated[str | None, typer.Option("--target-class")] = None,
 ) -> None:
     cfg = load_config(config)
     model = load_checkpoint(checkpoint or cfg.model.checkpoint_path)
@@ -260,11 +268,11 @@ def classify_file(
 @app.command("classify-live")
 def classify_live(
     config: ConfigOption,
-    interface: Annotated[Optional[str], typer.Option("--interface")] = None,
-    checkpoint: Annotated[Optional[Path], typer.Option("--checkpoint")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
-    max_packets: Annotated[Optional[int], typer.Option("--max-packets")] = None,
-    timeout_seconds: Annotated[Optional[float], typer.Option("--timeout-seconds")] = None,
+    interface: Annotated[str | None, typer.Option("--interface")] = None,
+    checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    max_packets: Annotated[int | None, typer.Option("--max-packets")] = None,
+    timeout_seconds: Annotated[float | None, typer.Option("--timeout-seconds")] = None,
 ) -> None:
     cfg = load_config(config)
     iface = interface or cfg.input.live_interface
@@ -283,8 +291,8 @@ def classify_live(
 @app.command()
 def report(
     config: ConfigOption,
-    metrics_input: Annotated[Optional[Path], typer.Option("--metrics-input")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
+    metrics_input: Annotated[Path | None, typer.Option("--metrics-input")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
 ) -> None:
     import json
 

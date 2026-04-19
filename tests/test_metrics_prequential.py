@@ -27,8 +27,24 @@ def test_prequential_predicts_before_learning_current_row():
     model = OnlineModel("fake", estimator, [], {})
     metrics, predictions = evaluate_prequential_rows(
         [
-            {"label": "target", "hour": 1, "data_rate": 1, "ssi": 1, "frame_type": 2, "frame_subtype": 0, "data_size": 10},
-            {"label": "target", "hour": 1, "data_rate": 1, "ssi": 1, "frame_type": 2, "frame_subtype": 0, "data_size": 10},
+            {
+                "label": "target",
+                "hour": 1,
+                "data_rate": 1,
+                "ssi": 1,
+                "frame_type": 2,
+                "frame_subtype": 0,
+                "data_size": 10,
+            },
+            {
+                "label": "target",
+                "hour": 1,
+                "data_rate": 1,
+                "ssi": 1,
+                "frame_type": 2,
+                "frame_subtype": 0,
+                "data_size": 10,
+            },
         ],
         model,
         FeatureConfig(),
@@ -49,4 +65,3 @@ def test_metrics_include_imbalance_metrics():
     assert metrics["recall"] == 0.5
     assert metrics["f1"] > 0
     assert metrics["mcc"] is not None
-

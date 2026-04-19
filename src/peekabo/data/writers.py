@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterable, Iterator
 from itertools import islice
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 
-def write_rows(path: str | Path, rows: Iterable[dict[str, Any]], *, chunk_size: int = 10_000) -> int:
+def write_rows(
+    path: str | Path, rows: Iterable[dict[str, Any]], *, chunk_size: int = 10_000
+) -> int:
     dataset_path = Path(path)
     dataset_path.parent.mkdir(parents=True, exist_ok=True)
     suffix = dataset_path.suffix.lower()

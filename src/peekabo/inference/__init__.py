@@ -1,2 +1,1 @@
 """Classification and rolling aggregation."""
-

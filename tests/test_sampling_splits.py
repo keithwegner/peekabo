@@ -48,4 +48,3 @@ def test_chronological_and_holdout_splits(tmp_path: Path):
     holdout_split_file(source, train, test, train_fraction=0.6, seed=99)
     assert len(read_all_rows(train)) == 3
     assert len(read_all_rows(test)) == 2
-

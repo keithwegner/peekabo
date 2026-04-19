@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from peekabo.config import FeatureConfig
 from peekabo.features.extract import row_to_model_features
@@ -46,4 +47,3 @@ def classify_rows(
             ).to_dict()
         )
     return predictions
-

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 from peekabo.config import FeatureConfig
 from peekabo.parsing.records import FeatureRow, PacketRecord
@@ -58,7 +59,9 @@ def choose_data_size(row: dict[str, Any], mode: str = "dot11_frame_len") -> int 
     return None
 
 
-def record_to_feature_row(record: PacketRecord | dict[str, Any], config: FeatureConfig) -> FeatureRow:
+def record_to_feature_row(
+    record: PacketRecord | dict[str, Any], config: FeatureConfig
+) -> FeatureRow:
     row = record.to_dict() if isinstance(record, PacketRecord) else dict(record)
     return FeatureRow(
         timestamp=row.get("timestamp"),
@@ -104,7 +107,11 @@ def row_to_model_features(row: dict[str, Any], config: FeatureConfig) -> dict[st
     for name in DEFAULT_MODEL_FEATURES:
         value = row.get(name)
         if value is None:
-            features[name] = config.impute_numeric if name in {"hour", "data_rate", "ssi", "data_size"} else config.impute_categorical
+            features[name] = (
+                config.impute_numeric
+                if name in {"hour", "data_rate", "ssi", "data_size"}
+                else config.impute_categorical
+            )
             if config.include_missing_indicators:
                 features[f"{name}__missing"] = 1
         else:
@@ -127,4 +134,3 @@ def stable_mac_hash(mac: str | None) -> str:
         return "missing"
     digest = hashlib.sha256(str(mac).lower().encode("utf-8")).hexdigest()
     return digest[:16]
-

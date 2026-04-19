@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from statistics import mean
-from typing import Any, Iterable
+from typing import Any
 
 from peekabo.config import WindowConfig
 from peekabo.parsing.records import RollingPresenceRow
@@ -21,7 +22,9 @@ def rolling_frame_count(
     for start in range(0, len(rows), config.frame_count):
         chunk = rows[start : start + config.frame_count]
         if chunk:
-            output.append(_summarize_window(chunk, start, start + len(chunk) - 1, target_class, config))
+            output.append(
+                _summarize_window(chunk, start, start + len(chunk) - 1, target_class, config)
+            )
     return output
 
 
@@ -118,4 +121,3 @@ def _presence_state(
     if not ratio_ok and not mean_ok and not max_ok:
         return "absent"
     return "uncertain"
-

@@ -66,4 +66,3 @@ def load_checkpoint(path: str | Path) -> OnlineModel:
         feature_names=list(payload["feature_names"]),
         metadata=dict(payload.get("metadata") or {}),
     )
-

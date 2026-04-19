@@ -33,7 +33,7 @@ class TargetRegistry:
                     self._mac_to_target[normalized] = target
 
     @classmethod
-    def from_file(cls, path: str | Path) -> "TargetRegistry":
+    def from_file(cls, path: str | Path) -> TargetRegistry:
         registry_path = Path(path)
         with registry_path.open("r", encoding="utf-8") as handle:
             if registry_path.suffix.lower() == ".json":
@@ -43,14 +43,16 @@ class TargetRegistry:
         return cls.from_dict(data)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TargetRegistry":
+    def from_dict(cls, data: dict[str, Any]) -> TargetRegistry:
         targets = []
         for raw in data.get("targets", []):
             targets.append(
                 Target(
                     target_id=str(raw["target_id"]),
                     label=raw.get("label"),
-                    mac_addresses=tuple(normalize_mac(mac) or "" for mac in raw.get("mac_addresses", [])),
+                    mac_addresses=tuple(
+                        normalize_mac(mac) or "" for mac in raw.get("mac_addresses", [])
+                    ),
                     enabled=bool(raw.get("enabled", True)),
                 )
             )

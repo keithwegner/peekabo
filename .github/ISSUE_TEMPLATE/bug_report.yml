@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a reproducible problem in peekabo.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not attach private packet captures or traffic data to public issues.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the command, config shape, and any synthetic fixture details needed to reproduce.
+      placeholder: |
+        1. Run `peekabo ...`
+        2. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Python version, install method, and dependency versions if relevant.
+      placeholder: |
+        - OS:
+        - Python:
+        - peekabo version/commit:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or output
+      description: Paste relevant logs after removing MACs, paths, or other sensitive details.
+      render: text

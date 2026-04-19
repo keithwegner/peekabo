@@ -21,4 +21,3 @@ def classify_dataset(config: AppConfig, input_path: str | Path, output_path: str
         positive_label=config.labeling.positive_label,
     )
     return write_rows(output_path, predictions)
-

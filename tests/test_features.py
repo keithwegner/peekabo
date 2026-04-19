@@ -1,5 +1,9 @@
 from peekabo.config import FeatureConfig
-from peekabo.features.extract import model_feature_names, record_to_feature_row, row_to_model_features
+from peekabo.features.extract import (
+    model_feature_names,
+    record_to_feature_row,
+    row_to_model_features,
+)
 from peekabo.parsing.records import PacketRecord
 
 
@@ -54,4 +58,3 @@ def test_leakage_debug_adds_hashed_mac_features():
     )
     assert "source_mac_hash" in features
     assert features["source_mac_hash"] != "aa:bb:cc:dd:ee:ff"
-
