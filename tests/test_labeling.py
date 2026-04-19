@@ -1,7 +1,7 @@
-from peekabo.config import FilterConfig, LabelConfig
-from peekabo.labeling.filters import is_ap_originated, passes_filters
-from peekabo.labeling.labelers import label_for_row
-from peekabo.labeling.targets import TargetRegistry
+from peekaboo.config import FilterConfig, LabelConfig
+from peekaboo.labeling.filters import is_ap_originated, passes_filters
+from peekaboo.labeling.labelers import label_for_row
+from peekaboo.labeling.targets import TargetRegistry
 
 
 def registry():

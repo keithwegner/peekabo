@@ -1,7 +1,7 @@
-from peekabo.config import FeatureConfig
-from peekabo.evaluation.metrics import classification_metrics
-from peekabo.evaluation.prequential import evaluate_prequential_rows
-from peekabo.models.base import OnlineModel
+from peekaboo.config import FeatureConfig
+from peekaboo.evaluation.metrics import classification_metrics
+from peekaboo.evaluation.prequential import evaluate_prequential_rows
+from peekaboo.models.base import OnlineModel
 
 
 class RecordingEstimator:

@@ -3,7 +3,7 @@ requires = ["hatchling>=1.24"]
 build-backend = "hatchling.build"
 
 [project]
-name = "peekabo"
+name = "peekaboo"
 version = "0.1.0"
 description = "Passive per-frame device identification for encrypted 802.11 captures."
 readme = "README.md"
@@ -31,10 +31,10 @@ dev = [
 ]
 
 [project.scripts]
-peekabo = "peekabo.cli:main"
+peekaboo = "peekaboo.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/peekabo"]
+packages = ["src/peekaboo"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

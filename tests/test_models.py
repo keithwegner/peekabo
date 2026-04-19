@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from peekabo.models.base import load_checkpoint
-from peekabo.models.registry import MODEL_MAPPINGS, create_model
+from peekaboo.models.base import load_checkpoint
+from peekaboo.models.registry import MODEL_MAPPINGS, create_model
 
 pytest.importorskip("river")
 

@@ -1,10 +1,10 @@
-from peekabo.config import FeatureConfig
-from peekabo.features.extract import (
+from peekaboo.config import FeatureConfig
+from peekaboo.features.extract import (
     model_feature_names,
     record_to_feature_row,
     row_to_model_features,
 )
-from peekabo.parsing.records import PacketRecord
+from peekaboo.parsing.records import PacketRecord
 
 
 def test_feature_extraction_data_size_fallback_and_signal_choice():

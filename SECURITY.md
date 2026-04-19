@@ -1,6 +1,6 @@
 # Security Policy
 
-`peekabo` is intended for passive analysis of wireless traffic metadata in environments where the operator is authorized to capture and analyze that traffic.
+`peekaboo` is intended for passive analysis of wireless traffic metadata in environments where the operator is authorized to capture and analyze that traffic.
 
 The project must not add features that decrypt traffic, inject frames, transmit probes, exploit networks, or inspect higher-layer payloads.
 

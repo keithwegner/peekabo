@@ -1,4 +1,4 @@
-from peekabo.parsing.radiotap import extract_radiotap_fields_from_layer
+from peekaboo.parsing.radiotap import extract_radiotap_fields_from_layer
 
 
 class FakeRadioTap:

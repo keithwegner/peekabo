@@ -1,6 +1,6 @@
-# peekabo
+# peekaboo
 
-`peekabo` is a passive Python 3.11+ application for per-frame device identification in encrypted 802.11 monitor-mode captures. It classifies each observed 802.11 frame using only unencrypted Radiotap metadata and 802.11 MAC-header fields.
+`peekaboo` is a passive Python 3.11+ application for per-frame device identification in encrypted 802.11 monitor-mode captures. It classifies each observed 802.11 frame using only unencrypted Radiotap metadata and 802.11 MAC-header fields.
 
 The tool does not decrypt traffic, inspect payloads, inject frames, transmit probes, or exploit networks. Use it only where you are authorized to capture and analyze wireless traffic.
 
@@ -15,11 +15,11 @@ python -m pip install -e ".[dev]"
 ## Quick Start
 
 ```bash
-peekabo ingest --config configs/example.yaml
-peekabo features --config configs/example.yaml
-peekabo label --config configs/example.yaml
-peekabo eval-prequential --config configs/example.yaml
-peekabo report --config configs/example.yaml
+peekaboo ingest --config configs/example.yaml
+peekaboo features --config configs/example.yaml
+peekaboo label --config configs/example.yaml
+peekaboo eval-prequential --config configs/example.yaml
+peekaboo report --config configs/example.yaml
 ```
 
 All commands accept a YAML config and targeted path/model overrides. Internal datasets are Parquet by default; CSV export is supported for interoperability.
@@ -32,14 +32,14 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 
 ```bash
 python examples/generate_synthetic_capture.py
-peekabo ingest --config configs/synthetic-demo.yaml
-peekabo features --config configs/synthetic-demo.yaml
-peekabo label --config configs/synthetic-demo.yaml
-peekabo split --config configs/synthetic-demo.yaml
-peekabo train-online --config configs/synthetic-demo.yaml
-peekabo eval-holdout --config configs/synthetic-demo.yaml
-peekabo classify-file --config configs/synthetic-demo.yaml
-peekabo report --config configs/synthetic-demo.yaml
+peekaboo ingest --config configs/synthetic-demo.yaml
+peekaboo features --config configs/synthetic-demo.yaml
+peekaboo label --config configs/synthetic-demo.yaml
+peekaboo split --config configs/synthetic-demo.yaml
+peekaboo train-online --config configs/synthetic-demo.yaml
+peekaboo eval-holdout --config configs/synthetic-demo.yaml
+peekaboo classify-file --config configs/synthetic-demo.yaml
+peekaboo report --config configs/synthetic-demo.yaml
 ```
 
 The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
@@ -69,7 +69,7 @@ Reports generated from leakage/debug runs are marked accordingly.
 
 ## Model Mapping
 
-The paper used MOA/Weka streaming classifiers. `peekabo` uses native Python `river` models behind a stable application interface:
+The paper used MOA/Weka streaming classifiers. `peekaboo` uses native Python `river` models behind a stable application interface:
 
 | Application ID | Native Python mapping |
 | --- | --- |
@@ -83,18 +83,18 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 ## CLI Commands
 
 ```bash
-peekabo ingest
-peekabo features
-peekabo label
-peekabo sample
-peekabo split
-peekabo feature-rank
-peekabo train-online
-peekabo eval-prequential
-peekabo eval-holdout
-peekabo classify-file
-peekabo classify-live
-peekabo report
+peekaboo ingest
+peekaboo features
+peekaboo label
+peekaboo sample
+peekaboo split
+peekaboo feature-rank
+peekaboo train-online
+peekaboo eval-prequential
+peekaboo eval-holdout
+peekaboo classify-file
+peekaboo classify-live
+peekaboo report
 ```
 
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.

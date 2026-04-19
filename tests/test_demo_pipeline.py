@@ -8,11 +8,11 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from peekabo.capture.synthetic import IPHONE_MAC, write_synthetic_capture
-from peekabo.cli import app
-from peekabo.config import FeatureConfig
-from peekabo.data.readers import read_all_rows, read_json
-from peekabo.features.extract import row_to_model_features
+from peekaboo.capture.synthetic import IPHONE_MAC, write_synthetic_capture
+from peekaboo.cli import app
+from peekaboo.config import FeatureConfig
+from peekaboo.data.readers import read_all_rows, read_json
+from peekaboo.features.extract import row_to_model_features
 
 pytest.importorskip("scapy")
 
@@ -103,7 +103,7 @@ def test_synthetic_capture_full_cli_demo_pipeline(tmp_path: Path):
     assert any(row["target_id"] == "target" for row in rolling)
     assert any(row["state"] == "present" for row in rolling)
     report_text = (output_dir / "report.md").read_text(encoding="utf-8")
-    assert "peekabo Experiment Report" in report_text
+    assert "peekaboo Experiment Report" in report_text
 
 
 def test_synthetic_capture_ingest_works_in_fresh_process(tmp_path: Path):
@@ -118,7 +118,7 @@ def test_synthetic_capture_ingest_works_in_fresh_process(tmp_path: Path):
     repo_src = Path(__file__).resolve().parents[1] / "src"
     env["PYTHONPATH"] = f"{repo_src}{os.pathsep}{env.get('PYTHONPATH', '')}"
     result = subprocess.run(
-        [sys.executable, "-m", "peekabo.cli", "ingest", "--config", str(config_path)],
+        [sys.executable, "-m", "peekaboo.cli", "ingest", "--config", str(config_path)],
         check=False,
         capture_output=True,
         text=True,
