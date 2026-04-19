@@ -32,6 +32,27 @@ def write_json(path: str | Path, data: dict[str, Any]) -> None:
         json.dump(data, handle, indent=2, sort_keys=True)
 
 
+class JsonlRowWriter:
+    def __init__(self, path: str | Path, *, append: bool = False) -> None:
+        self.path = Path(path)
+        self.append = append
+        self._handle: Any = None
+
+    def __enter__(self) -> JsonlRowWriter:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._handle = self.path.open("a" if self.append else "w", encoding="utf-8")
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        if self._handle is not None:
+            self._handle.close()
+
+    def write(self, row: dict[str, Any]) -> None:
+        if self._handle is None:
+            raise RuntimeError("JsonlRowWriter must be used as a context manager")
+        self._handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+
 def _chunks(iterator: Iterator[dict[str, Any]], size: int) -> Iterator[list[dict[str, Any]]]:
     while True:
         chunk = list(islice(iterator, size))
