@@ -32,6 +32,8 @@ make build PYTHON=.venv/bin/python
 
 Before opening a PR:
 
+- Open or reference a scoped GitHub Issue for non-trivial feature and bug work.
+- Link the PR with `Closes #<issue-number>` when the PR fully resolves the Issue.
 - Keep changes scoped and avoid unrelated refactors.
 - Do not commit packet captures, generated run outputs, credentials, or local virtual environments.
 - Include tests for behavior changes.

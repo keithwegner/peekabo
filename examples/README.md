@@ -4,6 +4,7 @@ Generate a deterministic synthetic Radiotap/802.11 capture and run the full demo
 
 ```bash
 python examples/generate_synthetic_capture.py
+peekaboo inspect --config configs/synthetic-demo.yaml
 peekaboo ingest --config configs/synthetic-demo.yaml
 peekaboo features --config configs/synthetic-demo.yaml
 peekaboo label --config configs/synthetic-demo.yaml

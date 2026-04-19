@@ -57,6 +57,7 @@ def test_synthetic_capture_full_cli_demo_pipeline(tmp_path: Path):
 
     runner = CliRunner()
     for command in [
+        "inspect",
         "ingest",
         "features",
         "label",
@@ -76,8 +77,11 @@ def test_synthetic_capture_full_cli_demo_pipeline(tmp_path: Path):
     test_rows = read_all_rows(output_dir / "test.parquet")
     predictions = read_all_rows(output_dir / "predictions.parquet")
     rolling = read_all_rows(output_dir / "rolling.parquet")
+    inspection = read_json(output_dir / "inspect.json")
     metrics = read_json(output_dir / "metrics.json")
 
+    assert inspection["packets_scanned"] == 120
+    assert inspection["target_match_total"] > 0
     assert len(records) == 120
     assert len(features) == 120
     assert len(labels) == 120
@@ -85,6 +89,7 @@ def test_synthetic_capture_full_cli_demo_pipeline(tmp_path: Path):
     assert test_rows
     assert predictions
     assert rolling
+    assert (output_dir / "inspect.md").exists()
     assert (output_dir / "model.pkl").exists()
     assert (output_dir / "report.md").exists()
 
@@ -131,6 +136,37 @@ def test_synthetic_capture_ingest_works_in_fresh_process(tmp_path: Path):
     assert all(row["parse_ok"] for row in records)
 
 
+def test_synthetic_capture_inspect_cli_outputs_diagnostics(tmp_path: Path):
+    capture_path = tmp_path / "synthetic-demo.pcap"
+    config_path = tmp_path / "config.yaml"
+    targets_path = tmp_path / "targets.yaml"
+    output_dir = tmp_path / "runs"
+    write_synthetic_capture(capture_path)
+    _write_demo_config(config_path, targets_path, capture_path, output_dir)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "inspect",
+            "--config",
+            str(config_path),
+            "--max-packets",
+            "10",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    summary = read_json(output_dir / "inspect.json")
+    assert summary["packets_scanned"] == 10
+    assert summary["capture_file_count"] == 1
+    assert summary["dot11_frame_count"] == 10
+    assert summary["radiotap_coverage"]["data_rate"]["present"] == 10
+    assert summary["radiotap_coverage"]["rssi_or_ssi"]["present"] == 10
+    assert summary["protected_frame_count"] == 10
+    assert summary["target_match_counts"]["iphone_5_user1"] > 0
+    assert (output_dir / "inspect.md").exists()
+
+
 def test_ingest_warns_and_fails_when_no_capture_files(tmp_path: Path):
     config_path = tmp_path / "empty.yaml"
     output_path = tmp_path / "records.csv"
@@ -150,6 +186,27 @@ def test_ingest_warns_and_fails_when_no_capture_files(tmp_path: Path):
     assert result.exit_code == 1
     assert "No capture files found" in result.output
     assert not output_path.exists()
+
+
+def test_inspect_warns_and_fails_when_no_capture_files(tmp_path: Path):
+    config_path = tmp_path / "empty.yaml"
+    output_dir = tmp_path / "runs"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "input": {"paths": [str(tmp_path / "missing-captures")], "live_interface": None},
+                "output_dir": str(output_dir),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(app, ["inspect", "--config", str(config_path)])
+
+    assert result.exit_code == 1
+    assert "No capture files found" in result.output
+    assert not (output_dir / "inspect.json").exists()
+    assert not (output_dir / "inspect.md").exists()
 
 
 def _write_demo_config(
