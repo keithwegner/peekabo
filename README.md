@@ -15,6 +15,7 @@ python -m pip install -e ".[dev]"
 ## Quick Start
 
 ```bash
+peekaboo inspect --config configs/example.yaml
 peekaboo ingest --config configs/example.yaml
 peekaboo features --config configs/example.yaml
 peekaboo label --config configs/example.yaml
@@ -24,7 +25,7 @@ peekaboo report --config configs/example.yaml
 
 All commands accept a YAML config and targeted path/model overrides. Internal datasets are Parquet by default; CSV export is supported for interoperability.
 
-If `ingest` reports that no capture files were found, check that the configured `input.paths` exist and contain `.pcap`, `.pcapng`, or `.cap` files.
+Run `inspect` before `ingest` on new captures. It checks whether the PCAP inputs contain usable Radiotap and 802.11 metadata, writes `inspect.json` and `inspect.md`, and warns about common first-run problems. If `inspect` or `ingest` reports that no capture files were found, check that the configured `input.paths` exist and contain `.pcap`, `.pcapng`, or `.cap` files.
 
 ## Try It With Synthetic Data
 
@@ -32,6 +33,7 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 
 ```bash
 python examples/generate_synthetic_capture.py
+peekaboo inspect --config configs/synthetic-demo.yaml
 peekaboo ingest --config configs/synthetic-demo.yaml
 peekaboo features --config configs/synthetic-demo.yaml
 peekaboo label --config configs/synthetic-demo.yaml
@@ -46,6 +48,7 @@ The generated capture is written under `examples/captures/`, and pipeline output
 
 After the full demo, `runs/synthetic-demo/` should include:
 
+- `inspect.json` and `inspect.md`: capture preflight diagnostics
 - `records.parquet`: normalized Radiotap/Dot11 packet records
 - `features.parquet`: paper feature rows with MACs retained for labeling/reporting
 - `labeled.parquet`: binary `target` vs. `other` labels
@@ -84,6 +87,7 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 
 ```bash
 peekaboo ingest
+peekaboo inspect
 peekaboo features
 peekaboo label
 peekaboo sample
@@ -103,6 +107,7 @@ peekaboo report
 
 Typical runs create:
 
+- capture inspection summaries
 - normalized packet records
 - feature datasets
 - labeled datasets

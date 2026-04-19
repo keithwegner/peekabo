@@ -7,6 +7,7 @@ from typing import Annotated
 
 import typer
 
+from peekaboo.capture.inspect import inspect_capture_paths, write_inspection_markdown
 from peekaboo.capture.live import iter_live_records
 from peekaboo.capture.sources import expand_input_paths, iter_packet_records
 from peekaboo.config import AppConfig, load_config, write_run_config
@@ -37,6 +38,46 @@ app = typer.Typer(no_args_is_help=True, help="Passive 802.11 device identificati
 ConfigOption = Annotated[
     Path, typer.Option("--config", "-c", exists=True, help="YAML config path.")
 ]
+
+
+@app.command()
+def inspect(
+    config: ConfigOption,
+    input_path: Annotated[list[Path] | None, typer.Option("--input", "-i")] = None,
+    output_json: Annotated[Path | None, typer.Option("--output-json")] = None,
+    output_markdown: Annotated[Path | None, typer.Option("--output-markdown")] = None,
+    max_packets: Annotated[int | None, typer.Option("--max-packets")] = None,
+) -> None:
+    cfg = load_config(config)
+    paths = input_path or cfg.input.paths
+    capture_paths = expand_input_paths(paths)
+    if not capture_paths:
+        path_list = ", ".join(str(path) for path in paths) or "<none>"
+        typer.secho(
+            "No capture files found for input path(s): "
+            f"{path_list}. Expected .pcap, .pcapng, or .cap files.",
+            err=True,
+        )
+        raise typer.Exit(1)
+    if max_packets is not None and max_packets < 1:
+        raise typer.BadParameter("--max-packets must be greater than 0")
+
+    registry = None
+    if cfg.target_registry_path is not None:
+        registry = TargetRegistry.from_file(cfg.target_registry_path)
+    summary = inspect_capture_paths(capture_paths, registry=registry, max_packets=max_packets)
+    json_path = output_json or cfg.output_dir / "inspect.json"
+    markdown_path = output_markdown or cfg.output_dir / "inspect.md"
+    write_json(json_path, summary)
+    write_inspection_markdown(markdown_path, summary)
+    typer.echo(
+        f"Inspected {summary['packets_scanned']} packets from "
+        f"{summary['capture_file_count']} capture file(s)"
+    )
+    for warning in summary["warnings"]:
+        typer.secho(f"Warning: {warning}", err=True)
+    typer.echo(f"Wrote inspection JSON to {json_path}")
+    typer.echo(f"Wrote inspection Markdown to {markdown_path}")
 
 
 @app.command()
