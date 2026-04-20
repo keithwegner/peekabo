@@ -24,6 +24,26 @@ All commands accept a YAML config and targeted path/model overrides. Internal da
 
 Run `inspect` before `ingest` on new captures. It checks whether the PCAP inputs contain usable Radiotap and 802.11 metadata, writes `inspect.json` and `inspect.md`, and warns about common first-run problems. If `inspect` or `ingest` reports that no capture files were found, check that the configured `input.paths` exist and contain `.pcap`, `.pcapng`, or `.cap` files.
 
+## Use With Your Own Capture
+
+Only use local captures from networks and devices you are authorized to monitor. Put PCAP/PCAPNG files under an ignored location such as `examples/captures/local/`; the repository ignores captures and generated run outputs by default.
+
+To bootstrap a runnable config and target registry from an authorized capture:
+
+```bash
+peekaboo setup \
+  --input examples/captures/local/home.pcapng \
+  --target-id my_phone \
+  --target-mac aa:bb:cc:dd:ee:ff \
+  --label phone \
+  --output-dir runs/home \
+  --config-output configs/home.yaml \
+  --targets-output configs/home-targets.yaml \
+  --run
+```
+
+`setup` writes `setup_inspect.json` and `setup_candidates.md` under the chosen output directory. If you omit `--target-mac`, it writes the candidate report only, so you can pick a source MAC before generating a target registry. The command does not configure wireless adapters, channel hop, decrypt traffic, inspect payloads, inject frames, or probe networks.
+
 ## Try It With Synthetic Data
 
 The repository includes a generator for a deterministic synthetic Radiotap/802.11 capture. It contains fake MAC addresses and fake frame metadata, so it is safe to use as a first-run demo. The synthetic traffic is intentionally learnable from allowed header-level features such as rate, signal, subtype, and frame size; it is not real-world performance evidence.
@@ -93,6 +113,7 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 
 ```bash
 peekaboo run
+peekaboo setup
 peekaboo ingest
 peekaboo inspect
 peekaboo features

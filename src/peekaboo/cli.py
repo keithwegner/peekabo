@@ -38,6 +38,7 @@ from peekaboo.labeling.targets import TargetRegistry
 from peekaboo.models.base import load_checkpoint
 from peekaboo.models.registry import create_model
 from peekaboo.runner import ExperimentRunError, run_experiment
+from peekaboo.setup import SetupError, run_setup
 
 app = typer.Typer(no_args_is_help=True, help="Passive 802.11 device identification.")
 
@@ -83,6 +84,54 @@ def run_command(
         f"Run {manifest['status']} with {len(manifest['stages'])} stage(s). "
         f"Wrote {manifest['artifacts']['run_manifest']}"
     )
+
+
+@app.command("setup")
+def setup_command(
+    input_paths: Annotated[
+        list[Path],
+        typer.Option("--input", "-i", help="Authorized PCAP/PCAPNG file or directory."),
+    ],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    config_output: Annotated[Path, typer.Option("--config-output")],
+    targets_output: Annotated[Path, typer.Option("--targets-output")],
+    target_id: Annotated[str | None, typer.Option("--target-id")] = None,
+    target_mac: Annotated[str | None, typer.Option("--target-mac")] = None,
+    label: Annotated[str | None, typer.Option("--label")] = None,
+    run_pipeline: Annotated[bool, typer.Option("--run")] = False,
+    force: Annotated[bool, typer.Option("--force")] = False,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    try:
+        result = run_setup(
+            input_paths=input_paths,
+            output_dir=output_dir,
+            config_output=config_output,
+            targets_output=targets_output,
+            target_id=target_id,
+            target_mac=target_mac,
+            label=label,
+            run_pipeline=run_pipeline,
+            force=force,
+            quiet=quiet,
+            progress=typer.echo,
+        )
+    except (SetupError, ExperimentRunError) as exc:
+        typer.secho(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+    if result["status"] == "candidates_only":
+        typer.echo(f"Wrote setup inspection to {result['setup_inspect_path']}")
+        typer.echo(f"Wrote candidate MAC report to {result['candidate_report_path']}")
+        typer.echo("Rerun with --target-id and --target-mac to generate a runnable config.")
+        return
+
+    typer.echo(f"Wrote setup inspection to {result['setup_inspect_path']}")
+    typer.echo(f"Wrote candidate MAC report to {result['candidate_report_path']}")
+    typer.echo(f"Wrote config to {result['config_path']}")
+    typer.echo(f"Wrote target registry to {result['targets_path']}")
+    if result.get("run_manifest_path"):
+        typer.echo(f"Wrote run manifest to {result['run_manifest_path']}")
 
 
 @app.command()

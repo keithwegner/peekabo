@@ -49,6 +49,8 @@ def summarize_packet_records(
     channel_frequencies: set[int] = set()
     source_macs: set[str] = set()
     destination_macs: set[str] = set()
+    source_mac_counts = Counter()
+    destination_mac_counts = Counter()
     target_matches = Counter()
 
     for record in records:
@@ -78,9 +80,13 @@ def summarize_packet_records(
         source_mac = row.get("source_mac")
         destination_mac = row.get("destination_mac")
         if source_mac:
-            source_macs.add(str(source_mac))
+            source_mac_text = str(source_mac)
+            source_macs.add(source_mac_text)
+            source_mac_counts[source_mac_text] += 1
         if destination_mac:
-            destination_macs.add(str(destination_mac))
+            destination_mac_text = str(destination_mac)
+            destination_macs.add(destination_mac_text)
+            destination_mac_counts[destination_mac_text] += 1
         if registry is not None:
             target_id = registry.target_id_for_mac(source_mac)
             if target_id is not None:
@@ -105,6 +111,8 @@ def summarize_packet_records(
         "radiotap_coverage": radiotap_coverage,
         "source_mac_count": len(source_macs),
         "destination_mac_count": len(destination_macs),
+        "source_mac_counts": _sorted_counts(source_mac_counts),
+        "destination_mac_counts": _sorted_counts(destination_mac_counts),
         "target_match_total": sum(target_matches.values()),
         "target_match_counts": dict(sorted(target_matches.items())),
         "warnings": [],
@@ -209,3 +217,7 @@ def _coverage(present: int, total: int) -> dict[str, float | int]:
 def _coverage_fraction(summary: dict[str, Any], field: str) -> float:
     coverage = (summary.get("radiotap_coverage") or {}).get(field) or {}
     return float(coverage.get("coverage") or 0.0)
+
+
+def _sorted_counts(counter: Counter) -> dict[str, int]:
+    return dict(sorted(counter.items(), key=lambda item: (-item[1], item[0])))
