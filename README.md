@@ -15,13 +15,10 @@ python -m pip install -e ".[dev]"
 ## Quick Start
 
 ```bash
-peekaboo inspect --config configs/example.yaml
-peekaboo ingest --config configs/example.yaml
-peekaboo features --config configs/example.yaml
-peekaboo label --config configs/example.yaml
-peekaboo eval-prequential --config configs/example.yaml
-peekaboo report --config configs/example.yaml
+peekaboo run --config configs/example.yaml
 ```
+
+`peekaboo run` executes the configured pipeline, writes `run_manifest.json` and `run_summary.md`, and records each stage as completed, skipped, or failed. Use `--dry-run` to print the planned stages, `--force` to overwrite existing stage outputs, or `--skip-existing` to reuse completed artifacts.
 
 All commands accept a YAML config and targeted path/model overrides. Internal datasets are Parquet by default; CSV export is supported for interoperability.
 
@@ -33,6 +30,14 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 
 ```bash
 python examples/generate_synthetic_capture.py
+peekaboo run --config configs/synthetic-demo.yaml
+```
+
+The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
+
+To run the synthetic demo one stage at a time instead, use:
+
+```bash
 peekaboo inspect --config configs/synthetic-demo.yaml
 peekaboo ingest --config configs/synthetic-demo.yaml
 peekaboo features --config configs/synthetic-demo.yaml
@@ -45,10 +50,9 @@ peekaboo presence-replay --config configs/synthetic-demo.yaml
 peekaboo report --config configs/synthetic-demo.yaml
 ```
 
-The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
-
 After the full demo, `runs/synthetic-demo/` should include:
 
+- `run_manifest.json` and `run_summary.md`: reproducible run provenance and stage summary
 - `inspect.json` and `inspect.md`: capture preflight diagnostics
 - `records.parquet`: normalized Radiotap/Dot11 packet records
 - `features.parquet`: paper feature rows with MACs retained for labeling/reporting
@@ -88,6 +92,7 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 ## CLI Commands
 
 ```bash
+peekaboo run
 peekaboo ingest
 peekaboo inspect
 peekaboo features
@@ -104,6 +109,13 @@ peekaboo presence-replay
 peekaboo presence-live
 peekaboo report
 ```
+
+Runner profiles:
+
+- `peekaboo run --profile full`: inspect, ingest, feature extraction, labeling, split, train, holdout evaluation, file classification, replay presence, report
+- `peekaboo run --profile prepare`: inspect through split
+- `peekaboo run --profile train-eval`: train, holdout evaluation, file classification, report
+- `peekaboo run --profile presence-replay`: train and replay presence output
 
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.
 
