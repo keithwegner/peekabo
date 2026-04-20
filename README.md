@@ -12,6 +12,14 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
+## Local Checks
+
+```bash
+make check PYTHON=.venv/bin/python
+```
+
+The test command reports coverage for `src/peekaboo` and enforces the configured coverage gate. Use `make coverage PYTHON=.venv/bin/python` for an HTML report under `htmlcov/`.
+
 ## Quick Start
 
 ```bash

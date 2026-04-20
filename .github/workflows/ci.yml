@@ -41,5 +41,5 @@ jobs:
       - name: Compile
         run: python -m compileall -q src tests
 
-      - name: Test
+      - name: Test with coverage
         run: python -m pytest -q

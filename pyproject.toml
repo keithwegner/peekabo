@@ -26,6 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "build>=1.2",
+  "pytest-cov>=7.0",
   "pytest>=9.0.3",
   "ruff>=0.4",
 ]
@@ -39,6 +40,27 @@ packages = ["src/peekaboo"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = [
+  "--cov=src/peekaboo",
+  "--cov-report=term-missing",
+  "--cov-fail-under=70",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/peekaboo"]
+omit = [
+  "src/peekaboo/__init__.py",
+  "src/peekaboo/*/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  "pragma: no cover",
+  'if __name__ == "__main__":',
+]
 
 [tool.ruff]
 line-length = 100
