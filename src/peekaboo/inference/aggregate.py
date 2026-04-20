@@ -23,7 +23,13 @@ def rolling_frame_count(
         chunk = rows[start : start + config.frame_count]
         if chunk:
             output.append(
-                _summarize_window(chunk, start, start + len(chunk) - 1, target_class, config)
+                summarize_presence_window(
+                    chunk,
+                    start,
+                    start + len(chunk) - 1,
+                    target_class,
+                    config,
+                )
             )
     return output
 
@@ -45,7 +51,7 @@ def rolling_time(
     for bucket, rows in sorted(buckets.items()):
         start = bucket * config.time_seconds
         end = start + config.time_seconds
-        output.append(_summarize_window(rows, start, end, target_class, config))
+        output.append(summarize_presence_window(rows, start, end, target_class, config))
     return output
 
 
@@ -65,7 +71,7 @@ def rolling_aggregates(
     return frame_rows + time_rows
 
 
-def _summarize_window(
+def summarize_presence_window(
     rows: list[dict[str, Any]],
     window_start: float | int,
     window_end: float | int,

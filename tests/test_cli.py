@@ -8,4 +8,6 @@ def test_cli_help_smoke():
     assert result.exit_code == 0
     assert "inspect" in result.output
     assert "ingest" in result.output
+    assert "presence-replay" in result.output
+    assert "presence-live" in result.output
     assert "eval-prequential" in result.output

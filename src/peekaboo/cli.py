@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 
@@ -14,7 +14,7 @@ from peekaboo.config import AppConfig, load_config, write_run_config
 from peekaboo.data.readers import iter_rows
 from peekaboo.data.sampling import balance_file, random_sample_file
 from peekaboo.data.splits import split_file
-from peekaboo.data.writers import write_json, write_rows
+from peekaboo.data.writers import JsonlRowWriter, write_json, write_rows
 from peekaboo.evaluation.holdout import evaluate_holdout_rows, train_online_rows
 from peekaboo.evaluation.plots import (
     plot_binary_curves,
@@ -26,7 +26,12 @@ from peekaboo.evaluation.reports import write_markdown_report
 from peekaboo.features.extract import iter_feature_rows, model_feature_names
 from peekaboo.features.selection import rank_feature_file
 from peekaboo.inference.aggregate import rolling_aggregates
-from peekaboo.inference.classify import classify_rows
+from peekaboo.inference.classify import classify_row, classify_rows
+from peekaboo.inference.presence import (
+    PresenceStateTracker,
+    StreamingPresenceEngine,
+    format_presence_event,
+)
 from peekaboo.labeling.filters import passes_filters
 from peekaboo.labeling.labelers import iter_labeled_rows
 from peekaboo.labeling.targets import TargetRegistry
@@ -328,6 +333,70 @@ def classify_file(
     typer.echo(f"Wrote {len(predictions)} predictions and {len(rolling)} rolling rows")
 
 
+@app.command("presence-replay")
+def presence_replay(
+    config: ConfigOption,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i")] = None,
+    checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
+    predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
+    presence_output: Annotated[Path | None, typer.Option("--presence-output")] = None,
+    target_class: Annotated[str | None, typer.Option("--target-class")] = None,
+    max_packets: Annotated[int | None, typer.Option("--max-packets")] = None,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    cfg = load_config(config)
+    if max_packets is not None and max_packets < 1:
+        raise typer.BadParameter("--max-packets must be greater than 0")
+    model = load_checkpoint(checkpoint or cfg.model.checkpoint_path)
+    prediction_count, event_count = _run_presence_stream(
+        iter_rows(input_path or cfg.data.features_path),
+        model,
+        cfg,
+        target_class=target_class or _default_rolling_target_class(cfg),
+        predictions_output=predictions_output or cfg.output_dir / "replay_predictions.jsonl",
+        presence_output=presence_output or cfg.output_dir / "replay_presence.jsonl",
+        max_packets=max_packets,
+        quiet=quiet,
+    )
+    typer.echo(f"Wrote {prediction_count} replay predictions and {event_count} presence events")
+
+
+@app.command("presence-live")
+def presence_live(
+    config: ConfigOption,
+    checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
+    interface: Annotated[str | None, typer.Option("--interface")] = None,
+    predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
+    presence_output: Annotated[Path | None, typer.Option("--presence-output")] = None,
+    target_class: Annotated[str | None, typer.Option("--target-class")] = None,
+    max_packets: Annotated[int | None, typer.Option("--max-packets")] = None,
+    timeout_seconds: Annotated[float | None, typer.Option("--timeout-seconds")] = None,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    cfg = load_config(config)
+    iface = interface or cfg.input.live_interface
+    if not iface:
+        raise typer.BadParameter("A monitor-mode interface is required")
+    if max_packets is not None and max_packets < 1:
+        raise typer.BadParameter("--max-packets must be greater than 0")
+    model = load_checkpoint(checkpoint or cfg.model.checkpoint_path)
+    feature_rows = iter_feature_rows(
+        iter_live_records(iface, timeout_seconds=timeout_seconds, max_packets=max_packets),
+        cfg.features,
+    )
+    prediction_count, event_count = _run_presence_stream(
+        feature_rows,
+        model,
+        cfg,
+        target_class=target_class or _default_rolling_target_class(cfg),
+        predictions_output=predictions_output or cfg.output_dir / "live_predictions.jsonl",
+        presence_output=presence_output or cfg.output_dir / "live_presence.jsonl",
+        max_packets=None,
+        quiet=quiet,
+    )
+    typer.echo(f"Wrote {prediction_count} live predictions and {event_count} presence events")
+
+
 @app.command("classify-live")
 def classify_live(
     config: ConfigOption,
@@ -382,6 +451,50 @@ def _default_rolling_target_class(cfg: AppConfig) -> str:
     if cfg.labeling.mode in {"binary_one_vs_rest", "per_target_binary"}:
         return cfg.labeling.positive_label
     return cfg.labeling.target_id or cfg.labeling.positive_label
+
+
+def _run_presence_stream(
+    rows: Any,
+    model: Any,
+    cfg: AppConfig,
+    *,
+    target_class: str,
+    predictions_output: Path,
+    presence_output: Path,
+    max_packets: int | None,
+    quiet: bool,
+) -> tuple[int, int]:
+    engine = StreamingPresenceEngine(target_class=target_class, config=cfg.windowing)
+    state_tracker = PresenceStateTracker()
+    prediction_count = 0
+    event_count = 0
+    with JsonlRowWriter(predictions_output, append=True) as predictions, JsonlRowWriter(
+        presence_output, append=True
+    ) as presence:
+        for row in rows:
+            if max_packets is not None and prediction_count >= max_packets:
+                break
+            prediction = classify_row(
+                row,
+                model,
+                cfg.features,
+                label_mode=cfg.labeling.mode,
+                packet_index=prediction_count,
+            )
+            predictions.write(prediction)
+            prediction_count += 1
+            for event in engine.process(prediction):
+                presence.write(event)
+                event_count += 1
+                if not quiet and state_tracker.is_change(event):
+                    typer.echo(format_presence_event(event))
+
+        for event in engine.flush():
+            presence.write(event)
+            event_count += 1
+            if not quiet and state_tracker.is_change(event):
+                typer.echo(format_presence_event(event))
+    return prediction_count, event_count
 
 
 def _write_eval_outputs(
