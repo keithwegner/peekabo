@@ -37,12 +37,52 @@ from peekaboo.labeling.labelers import iter_labeled_rows
 from peekaboo.labeling.targets import TargetRegistry
 from peekaboo.models.base import load_checkpoint
 from peekaboo.models.registry import create_model
+from peekaboo.runner import ExperimentRunError, run_experiment
 
 app = typer.Typer(no_args_is_help=True, help="Passive 802.11 device identification.")
 
 ConfigOption = Annotated[
     Path, typer.Option("--config", "-c", exists=True, help="YAML config path.")
 ]
+
+
+@app.command("run")
+def run_command(
+    config: ConfigOption,
+    profile: Annotated[str, typer.Option("--profile")] = "full",
+    from_stage: Annotated[str | None, typer.Option("--from-stage")] = None,
+    to_stage: Annotated[str | None, typer.Option("--to-stage")] = None,
+    force: Annotated[bool, typer.Option("--force")] = False,
+    skip_existing: Annotated[bool, typer.Option("--skip-existing")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    try:
+        manifest = run_experiment(
+            config,
+            profile=profile,
+            from_stage=from_stage,
+            to_stage=to_stage,
+            force=force,
+            skip_existing=skip_existing,
+            dry_run=dry_run,
+            quiet=quiet,
+            progress=None if dry_run else typer.echo,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ExperimentRunError as exc:
+        typer.secho(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+    stages = " -> ".join(manifest["stage_order"])
+    if dry_run:
+        typer.echo(f"Dry run planned stages: {stages}")
+        return
+    typer.echo(
+        f"Run {manifest['status']} with {len(manifest['stages'])} stage(s). "
+        f"Wrote {manifest['artifacts']['run_manifest']}"
+    )
 
 
 @app.command()
