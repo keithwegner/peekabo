@@ -10,6 +10,7 @@ import typer
 from peekaboo.capture.inspect import inspect_capture_paths, write_inspection_markdown
 from peekaboo.capture.live import iter_live_records
 from peekaboo.capture.sources import expand_input_paths, iter_packet_records
+from peekaboo.comparison import ComparisonError, run_comparison
 from peekaboo.config import AppConfig, load_config, write_run_config
 from peekaboo.data.readers import iter_rows
 from peekaboo.data.sampling import balance_file, random_sample_file
@@ -83,6 +84,45 @@ def run_command(
     typer.echo(
         f"Run {manifest['status']} with {len(manifest['stages'])} stage(s). "
         f"Wrote {manifest['artifacts']['run_manifest']}"
+    )
+
+
+@app.command("compare")
+def compare_command(
+    config: ConfigOption,
+    models: Annotated[
+        list[str] | None,
+        typer.Option("--models", help="Model ID to include; repeat for multiple models."),
+    ] = None,
+    train_fractions: Annotated[
+        list[float] | None,
+        typer.Option(
+            "--train-fractions",
+            help="Training fraction to include; repeat for multiple fractions.",
+        ),
+    ] = None,
+    output_dir: Annotated[Path | None, typer.Option("--output-dir")] = None,
+    prepare: Annotated[bool | None, typer.Option("--prepare/--no-prepare")] = None,
+    force: Annotated[bool, typer.Option("--force")] = False,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    try:
+        manifest = run_comparison(
+            config,
+            models=models,
+            train_fractions=train_fractions,
+            output_dir=output_dir,
+            prepare_if_missing=prepare,
+            force=force,
+            quiet=quiet,
+            progress=typer.echo,
+        )
+    except ComparisonError as exc:
+        typer.secho(str(exc), err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        f"Comparison {manifest['status']} with {manifest['result_count']} result row(s). "
+        f"Wrote {manifest['artifacts']['manifest']}"
     )
 
 

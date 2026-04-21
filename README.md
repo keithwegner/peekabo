@@ -59,9 +59,12 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 ```bash
 python examples/generate_synthetic_capture.py
 peekaboo run --config configs/synthetic-demo.yaml
+peekaboo compare --config configs/synthetic-demo.yaml
 ```
 
 The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
+
+`peekaboo compare` runs the configured paper-style model/fraction comparison over the labeled synthetic dataset and writes aggregate results under `runs/synthetic-demo/comparison/`. Synthetic comparison results are useful for smoke testing and onboarding only; they are not real-world performance evidence.
 
 To run the synthetic demo one stage at a time instead, use:
 
@@ -76,6 +79,7 @@ peekaboo eval-holdout --config configs/synthetic-demo.yaml
 peekaboo classify-file --config configs/synthetic-demo.yaml
 peekaboo presence-replay --config configs/synthetic-demo.yaml
 peekaboo report --config configs/synthetic-demo.yaml
+peekaboo compare --config configs/synthetic-demo.yaml
 ```
 
 After the full demo, `runs/synthetic-demo/` should include:
@@ -92,6 +96,7 @@ After the full demo, `runs/synthetic-demo/` should include:
 - `rolling.parquet`: rolling target-presence summaries
 - `replay_predictions.jsonl` and `replay_presence.jsonl`: live-style replay output
 - `report.md`: Markdown experiment report
+- `comparison/`: aggregate model/fraction comparison results, report, and trend charts
 
 ## Faithful Feature Policy
 
@@ -121,6 +126,7 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 
 ```bash
 peekaboo run
+peekaboo compare
 peekaboo setup
 peekaboo ingest
 peekaboo inspect
@@ -145,6 +151,12 @@ Runner profiles:
 - `peekaboo run --profile prepare`: inspect through split
 - `peekaboo run --profile train-eval`: train, holdout evaluation, file classification, report
 - `peekaboo run --profile presence-replay`: train and replay presence output
+
+Comparison runs:
+
+- `peekaboo compare --config configs/synthetic-demo.yaml`: compare configured model IDs and train fractions over a labeled dataset
+- `peekaboo compare --models leveraging_bag --models adaptive_hoeffding_tree --train-fractions 0.1 --train-fractions 0.9`: compare a smaller explicit matrix
+- `peekaboo compare --no-prepare`: require an existing labeled dataset instead of preparing missing inputs
 
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.
 

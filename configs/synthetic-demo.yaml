@@ -66,3 +66,17 @@ windowing:
   present_ratio_threshold: 0.3
   mean_probability_threshold: 0.3
   max_probability_threshold: 0.8
+
+comparison:
+  models:
+    - leveraging_bag
+    - oza_boost
+    - oza_boost_adwin
+    - adaptive_hoeffding_tree
+  train_fractions:
+    - 0.01
+    - 0.1
+    - 0.5
+    - 0.9
+  output_dir: runs/synthetic-demo/comparison
+  prepare_if_missing: true
