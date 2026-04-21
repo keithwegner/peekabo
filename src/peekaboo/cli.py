@@ -13,6 +13,7 @@ from peekaboo.capture.live import iter_live_records
 from peekaboo.capture.sources import expand_input_paths, iter_packet_records
 from peekaboo.comparison import ComparisonError, run_comparison
 from peekaboo.config import AppConfig, load_config, write_run_config
+from peekaboo.dashboard import DashboardError, generate_dashboard
 from peekaboo.data.readers import iter_rows
 from peekaboo.data.sampling import balance_file, random_sample_file
 from peekaboo.data.splits import split_file
@@ -166,6 +167,30 @@ def calibrate_presence(
     typer.echo(
         f"Calibration {manifest['status']} with {manifest['result_count']} result row(s). "
         f"Wrote {manifest['artifacts']['manifest']}"
+    )
+
+
+@app.command("dashboard")
+def dashboard(
+    config: ConfigOption,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    force: Annotated[bool, typer.Option("--force")] = False,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    try:
+        result = generate_dashboard(
+            config,
+            output=output,
+            force=force,
+            quiet=quiet,
+        )
+    except DashboardError as exc:
+        typer.secho(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(
+        f"Wrote dashboard to {result['output']} with "
+        f"{result['artifact_count']} linked artifact(s)"
     )
 
 
