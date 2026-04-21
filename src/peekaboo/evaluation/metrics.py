@@ -103,6 +103,8 @@ def binary_auc_metrics(
     except Exception:
         return {"roc_auc": None, "pr_auc": None}
     truth = [1 if label == positive_label else 0 for label in y_true]
+    if len(set(truth)) < 2:
+        return {"roc_auc": None, "pr_auc": None}
     try:
         return {
             "roc_auc": float(roc_auc_score(truth, y_score)),

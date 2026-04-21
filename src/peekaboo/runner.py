@@ -23,9 +23,12 @@ from peekaboo.evaluation.plots import (
 )
 from peekaboo.evaluation.reports import write_markdown_report
 from peekaboo.features.extract import iter_feature_rows, model_feature_names
-from peekaboo.inference.aggregate import rolling_aggregates
+from peekaboo.inference.aggregate import rolling_aggregates_for_targets
 from peekaboo.inference.classify import classify_row, classify_rows
-from peekaboo.inference.presence import StreamingPresenceEngine
+from peekaboo.inference.presence import (
+    MultiTargetStreamingPresenceEngine,
+    resolve_presence_target_classes,
+)
 from peekaboo.labeling.filters import passes_filters
 from peekaboo.labeling.labelers import iter_labeled_rows
 from peekaboo.labeling.targets import TargetRegistry
@@ -377,8 +380,12 @@ def _run_classify_file(config: AppConfig, *, quiet: bool) -> dict[str, int]:
         positive_label=config.labeling.positive_label,
     )
     write_rows(config.data.predictions_path, predictions)
-    target = _default_rolling_target_class(config)
-    rolling = rolling_aggregates(predictions, target_class=target, config=config.windowing)
+    target_classes = _presence_target_classes(config)
+    rolling = rolling_aggregates_for_targets(
+        predictions,
+        target_classes=target_classes,
+        config=config.windowing,
+    )
     write_rows(config.data.rolling_path, rolling)
     return {"predictions": len(predictions), "rolling": len(rolling)}
 
@@ -389,7 +396,7 @@ def _run_presence_replay(config: AppConfig, *, quiet: bool) -> dict[str, int]:
         iter_rows(config.data.features_path),
         model,
         config,
-        target_class=_default_rolling_target_class(config),
+        target_classes=_presence_target_classes(config),
         predictions_output=config.output_dir / "replay_predictions.jsonl",
         presence_output=config.output_dir / "replay_presence.jsonl",
         quiet=quiet,
@@ -409,13 +416,16 @@ def _write_presence_stream(
     model: Any,
     config: AppConfig,
     *,
-    target_class: str,
+    target_classes: list[str],
     predictions_output: Path,
     presence_output: Path,
     quiet: bool,
 ) -> tuple[int, int]:
     del quiet
-    engine = StreamingPresenceEngine(target_class=target_class, config=config.windowing)
+    engine = MultiTargetStreamingPresenceEngine(
+        target_classes=target_classes,
+        config=config.windowing,
+    )
     prediction_count = 0
     event_count = 0
     with JsonlRowWriter(predictions_output) as predictions, JsonlRowWriter(
@@ -578,10 +588,11 @@ def _target_registry_optional(config: AppConfig) -> TargetRegistry | None:
     return TargetRegistry.from_file(config.target_registry_path)
 
 
-def _default_rolling_target_class(config: AppConfig) -> str:
-    if config.labeling.mode in {"binary_one_vs_rest", "per_target_binary"}:
-        return config.labeling.positive_label
-    return config.labeling.target_id or config.labeling.positive_label
+def _presence_target_classes(config: AppConfig) -> list[str]:
+    try:
+        return resolve_presence_target_classes(config)
+    except ValueError as exc:
+        raise ExperimentRunError(str(exc)) from exc
 
 
 def _require_stage_in_profile(stage: str, stages: list[StageName], profile: str) -> None:

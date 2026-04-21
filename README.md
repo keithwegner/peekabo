@@ -60,11 +60,15 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 python examples/generate_synthetic_capture.py
 peekaboo run --config configs/synthetic-demo.yaml
 peekaboo compare --config configs/synthetic-demo.yaml
+peekaboo run --config configs/synthetic-multitarget.yaml
+peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targets
 ```
 
 The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
 
 `peekaboo compare` runs the configured paper-style model/fraction comparison over the labeled synthetic dataset and writes aggregate results under `runs/synthetic-demo/comparison/`. Synthetic comparison results are useful for smoke testing and onboarding only; they are not real-world performance evidence.
+
+`configs/synthetic-multitarget.yaml` labels the same synthetic capture as multiclass traffic for `iphone_5_user1`, `lg_tv`, and `other`. Its presence config tracks all enabled registry targets, so replay/live-style output emits separate presence windows for each known target.
 
 To run the synthetic demo one stage at a time instead, use:
 
@@ -97,6 +101,15 @@ After the full demo, `runs/synthetic-demo/` should include:
 - `replay_predictions.jsonl` and `replay_presence.jsonl`: live-style replay output
 - `report.md`: Markdown experiment report
 - `comparison/`: aggregate model/fraction comparison results, report, and trend charts
+
+For multi-target presence, run:
+
+```bash
+peekaboo run --config configs/synthetic-multitarget.yaml
+peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targets
+```
+
+Use repeated `--target-class` options to track a subset, for example `--target-class iphone_5_user1 --target-class lg_tv`. `--all-targets` uses enabled target IDs from the target registry and requires a multiclass label mode.
 
 ## Faithful Feature Policy
 
@@ -161,6 +174,8 @@ Comparison runs:
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.
 
 `presence-live` is also passive-only. It loads a trained checkpoint, reads from an already configured monitor-mode interface, prints concise target-presence state changes, and writes streaming JSONL outputs. Use `presence-replay` on prepared feature rows to test the same runtime behavior without live wireless hardware.
+
+Both `presence-replay` and `presence-live` support `--all-targets` for multiclass checkpoints and repeatable `--target-class` options for selected targets. Without those options, they keep the single-target default.
 
 ## Output Artifacts
 

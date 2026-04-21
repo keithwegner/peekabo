@@ -1,0 +1,72 @@
+input:
+  paths:
+    - examples/captures/synthetic-demo.pcap
+  live_interface: null
+target_registry_path: configs/targets.yaml
+output_dir: runs/synthetic-multitarget
+random_seed: 42
+
+features:
+  data_size_mode: dot11_frame_len
+  leakage_debug: false
+  impute_numeric: -1.0
+  impute_categorical: missing
+
+labeling:
+  mode: multiclass_with_other
+  target_id: null
+  positive_label: target
+  negative_label: other
+
+filters:
+  known_targets_only: false
+  include_ap_originated: true
+  include_management: true
+  include_control: true
+  include_data: true
+  channel_frequency: null
+  start_time: null
+  end_time: null
+  rssi_min: null
+  rssi_max: null
+  min_frame_size: null
+  ap_macs: []
+
+model:
+  model_id: leveraging_bag
+  checkpoint_path: runs/synthetic-multitarget/model.pkl
+  params:
+    n_models: 5
+    base_model:
+      grace_period: 5
+
+data:
+  normalized_path: runs/synthetic-multitarget/records.parquet
+  features_path: runs/synthetic-multitarget/features.parquet
+  labeled_path: runs/synthetic-multitarget/labeled.parquet
+  train_path: runs/synthetic-multitarget/train.parquet
+  test_path: runs/synthetic-multitarget/test.parquet
+  predictions_path: runs/synthetic-multitarget/predictions.parquet
+  rolling_path: runs/synthetic-multitarget/rolling.parquet
+  metrics_path: runs/synthetic-multitarget/metrics.json
+
+sampling:
+  percentage: 100
+  balance_strategy: none
+  class_weight_column: sample_weight
+
+split:
+  train_fraction: 0.75
+  chronological: true
+
+windowing:
+  frame_count: 20
+  time_seconds: 20
+  min_frames: 5
+  present_ratio_threshold: 0.3
+  mean_probability_threshold: 0.3
+  max_probability_threshold: 0.8
+
+presence:
+  target_classes: []
+  all_targets: true

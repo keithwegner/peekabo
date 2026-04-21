@@ -6,9 +6,13 @@ Generate a deterministic synthetic Radiotap/802.11 capture and run the full demo
 python examples/generate_synthetic_capture.py
 peekaboo run --config configs/synthetic-demo.yaml
 peekaboo compare --config configs/synthetic-demo.yaml
+peekaboo run --config configs/synthetic-multitarget.yaml
+peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targets
 ```
 
 The generated capture is written to `examples/captures/synthetic-demo.pcap`, which is ignored by Git. The demo writes its Parquet datasets, model checkpoint, metrics, rolling summaries, live-style replay JSONL streams, `run_manifest.json`, `run_summary.md`, Markdown report, and aggregate comparison outputs under `runs/synthetic-demo/`, which is also ignored by Git. Synthetic comparison results are onboarding smoke evidence only, not real-world wireless performance evidence.
+
+The multi-target demo writes separate multiclass outputs under `runs/synthetic-multitarget/` and emits presence rows for each enabled known target in `configs/targets.yaml`.
 
 To run the same workflow manually one command at a time:
 

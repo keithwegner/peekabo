@@ -65,3 +65,15 @@ def test_metrics_include_imbalance_metrics():
     assert metrics["recall"] == 0.5
     assert metrics["f1"] > 0
     assert metrics["mcc"] is not None
+
+
+def test_auc_metrics_skip_when_positive_label_is_absent():
+    metrics = classification_metrics(
+        ["iphone_5_user1", "lg_tv", "other"],
+        ["iphone_5_user1", "lg_tv", "other"],
+        y_score=[0.1, 0.2, 0.0],
+        positive_label="target",
+    )
+
+    assert metrics["roc_auc"] is None
+    assert metrics["pr_auc"] is None

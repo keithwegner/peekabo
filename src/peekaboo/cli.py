@@ -26,12 +26,13 @@ from peekaboo.evaluation.prequential import evaluate_prequential_rows
 from peekaboo.evaluation.reports import write_markdown_report
 from peekaboo.features.extract import iter_feature_rows, model_feature_names
 from peekaboo.features.selection import rank_feature_file
-from peekaboo.inference.aggregate import rolling_aggregates
+from peekaboo.inference.aggregate import rolling_aggregates_for_targets
 from peekaboo.inference.classify import classify_row, classify_rows
 from peekaboo.inference.presence import (
+    MultiTargetStreamingPresenceEngine,
     PresenceStateTracker,
-    StreamingPresenceEngine,
     format_presence_event,
+    resolve_presence_target_classes,
 )
 from peekaboo.labeling.filters import passes_filters
 from peekaboo.labeling.labelers import iter_labeled_rows
@@ -442,9 +443,17 @@ def classify_file(
     checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
     predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
     rolling_output: Annotated[Path | None, typer.Option("--rolling-output")] = None,
-    target_class: Annotated[str | None, typer.Option("--target-class")] = None,
+    target_class: Annotated[
+        list[str] | None,
+        typer.Option("--target-class", help="Target class to aggregate; repeat for many."),
+    ] = None,
+    all_targets: Annotated[
+        bool | None,
+        typer.Option("--all-targets/--single-target", help="Aggregate all enabled targets."),
+    ] = None,
 ) -> None:
     cfg = load_config(config)
+    target_classes = _presence_target_classes(cfg, target_class, all_targets)
     model = load_checkpoint(checkpoint or cfg.model.checkpoint_path)
     predictions = classify_rows(
         iter_rows(input_path or cfg.data.features_path),
@@ -456,10 +465,16 @@ def classify_file(
     pred_path = predictions_output or cfg.data.predictions_path
     roll_path = rolling_output or cfg.data.rolling_path
     write_rows(pred_path, predictions)
-    target = target_class or _default_rolling_target_class(cfg)
-    rolling = rolling_aggregates(predictions, target_class=target, config=cfg.windowing)
+    rolling = rolling_aggregates_for_targets(
+        predictions,
+        target_classes=target_classes,
+        config=cfg.windowing,
+    )
     write_rows(roll_path, rolling)
-    typer.echo(f"Wrote {len(predictions)} predictions and {len(rolling)} rolling rows")
+    typer.echo(
+        f"Wrote {len(predictions)} predictions and {len(rolling)} rolling rows "
+        f"for {len(target_classes)} target class(es)"
+    )
 
 
 @app.command("presence-replay")
@@ -469,19 +484,27 @@ def presence_replay(
     checkpoint: Annotated[Path | None, typer.Option("--checkpoint")] = None,
     predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
     presence_output: Annotated[Path | None, typer.Option("--presence-output")] = None,
-    target_class: Annotated[str | None, typer.Option("--target-class")] = None,
+    target_class: Annotated[
+        list[str] | None,
+        typer.Option("--target-class", help="Target class to track; repeat for many."),
+    ] = None,
+    all_targets: Annotated[
+        bool | None,
+        typer.Option("--all-targets/--single-target", help="Track all enabled targets."),
+    ] = None,
     max_packets: Annotated[int | None, typer.Option("--max-packets")] = None,
     quiet: Annotated[bool, typer.Option("--quiet")] = False,
 ) -> None:
     cfg = load_config(config)
     if max_packets is not None and max_packets < 1:
         raise typer.BadParameter("--max-packets must be greater than 0")
+    target_classes = _presence_target_classes(cfg, target_class, all_targets)
     model = load_checkpoint(checkpoint or cfg.model.checkpoint_path)
     prediction_count, event_count = _run_presence_stream(
         iter_rows(input_path or cfg.data.features_path),
         model,
         cfg,
-        target_class=target_class or _default_rolling_target_class(cfg),
+        target_classes=target_classes,
         predictions_output=predictions_output or cfg.output_dir / "replay_predictions.jsonl",
         presence_output=presence_output or cfg.output_dir / "replay_presence.jsonl",
         max_packets=max_packets,
@@ -497,7 +520,14 @@ def presence_live(
     interface: Annotated[str | None, typer.Option("--interface")] = None,
     predictions_output: Annotated[Path | None, typer.Option("--predictions-output")] = None,
     presence_output: Annotated[Path | None, typer.Option("--presence-output")] = None,
-    target_class: Annotated[str | None, typer.Option("--target-class")] = None,
+    target_class: Annotated[
+        list[str] | None,
+        typer.Option("--target-class", help="Target class to track; repeat for many."),
+    ] = None,
+    all_targets: Annotated[
+        bool | None,
+        typer.Option("--all-targets/--single-target", help="Track all enabled targets."),
+    ] = None,
     max_packets: Annotated[int | None, typer.Option("--max-packets")] = None,
     timeout_seconds: Annotated[float | None, typer.Option("--timeout-seconds")] = None,
     quiet: Annotated[bool, typer.Option("--quiet")] = False,
@@ -508,6 +538,7 @@ def presence_live(
         raise typer.BadParameter("A monitor-mode interface is required")
     if max_packets is not None and max_packets < 1:
         raise typer.BadParameter("--max-packets must be greater than 0")
+    target_classes = _presence_target_classes(cfg, target_class, all_targets)
     model = load_checkpoint(checkpoint or cfg.model.checkpoint_path)
     feature_rows = iter_feature_rows(
         iter_live_records(iface, timeout_seconds=timeout_seconds, max_packets=max_packets),
@@ -517,7 +548,7 @@ def presence_live(
         feature_rows,
         model,
         cfg,
-        target_class=target_class or _default_rolling_target_class(cfg),
+        target_classes=target_classes,
         predictions_output=predictions_output or cfg.output_dir / "live_predictions.jsonl",
         presence_output=presence_output or cfg.output_dir / "live_presence.jsonl",
         max_packets=None,
@@ -576,10 +607,19 @@ def _write_run_config(cfg: AppConfig) -> None:
     write_run_config(cfg, cfg.output_dir)
 
 
-def _default_rolling_target_class(cfg: AppConfig) -> str:
-    if cfg.labeling.mode in {"binary_one_vs_rest", "per_target_binary"}:
-        return cfg.labeling.positive_label
-    return cfg.labeling.target_id or cfg.labeling.positive_label
+def _presence_target_classes(
+    cfg: AppConfig,
+    target_classes: list[str] | None,
+    all_targets: bool | None,
+) -> list[str]:
+    try:
+        return resolve_presence_target_classes(
+            cfg,
+            target_classes=target_classes,
+            all_targets=all_targets,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
 
 def _run_presence_stream(
@@ -587,13 +627,13 @@ def _run_presence_stream(
     model: Any,
     cfg: AppConfig,
     *,
-    target_class: str,
+    target_classes: list[str],
     predictions_output: Path,
     presence_output: Path,
     max_packets: int | None,
     quiet: bool,
 ) -> tuple[int, int]:
-    engine = StreamingPresenceEngine(target_class=target_class, config=cfg.windowing)
+    engine = MultiTargetStreamingPresenceEngine(target_classes=target_classes, config=cfg.windowing)
     state_tracker = PresenceStateTracker()
     prediction_count = 0
     event_count = 0

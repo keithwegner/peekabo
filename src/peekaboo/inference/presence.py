@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
-from peekaboo.config import WindowConfig
+from peekaboo.config import AppConfig, WindowConfig
 from peekaboo.inference.aggregate import summarize_presence_window
+from peekaboo.labeling.targets import TargetRegistry
+
+MULTICLASS_LABEL_MODES = {"multiclass_known_targets_only", "multiclass_with_other"}
 
 
 class StreamingPresenceEngine:
@@ -77,6 +81,29 @@ class StreamingPresenceEngine:
         return event
 
 
+class MultiTargetStreamingPresenceEngine:
+    """Run one streaming presence engine per target class."""
+
+    def __init__(self, *, target_classes: Iterable[str], config: WindowConfig) -> None:
+        self.target_classes = unique_target_classes(target_classes)
+        self.engines = {
+            target_class: StreamingPresenceEngine(target_class=target_class, config=config)
+            for target_class in self.target_classes
+        }
+
+    def process(self, prediction: dict[str, Any]) -> list[dict[str, Any]]:
+        events: list[dict[str, Any]] = []
+        for engine in self.engines.values():
+            events.extend(engine.process(prediction))
+        return events
+
+    def flush(self) -> list[dict[str, Any]]:
+        events: list[dict[str, Any]] = []
+        for engine in self.engines.values():
+            events.extend(engine.flush())
+        return events
+
+
 class PresenceStateTracker:
     """Track state changes so terminal output stays concise."""
 
@@ -89,6 +116,38 @@ class PresenceStateTracker:
         previous = self._last_state.get(key)
         self._last_state[key] = state
         return previous != state
+
+
+def resolve_presence_target_classes(
+    config: AppConfig,
+    *,
+    target_classes: Iterable[str] | None = None,
+    all_targets: bool | None = None,
+    registry: TargetRegistry | None = None,
+) -> list[str]:
+    explicit_targets = unique_target_classes(target_classes or [])
+    if explicit_targets:
+        return explicit_targets
+    if all_targets is True:
+        return _all_registry_targets(config, registry=registry)
+    if all_targets is False:
+        return [_default_presence_target_class(config)]
+    if config.presence.target_classes:
+        return unique_target_classes(config.presence.target_classes)
+    if config.presence.all_targets:
+        return _all_registry_targets(config, registry=registry)
+    return [_default_presence_target_class(config)]
+
+
+def unique_target_classes(target_classes: Iterable[str]) -> list[str]:
+    selected: list[str] = []
+    seen: set[str] = set()
+    for target_class in target_classes:
+        value = str(target_class)
+        if value and value not in seen:
+            selected.append(value)
+            seen.add(value)
+    return selected
 
 
 def format_presence_event(event: dict[str, Any]) -> str:
@@ -107,3 +166,29 @@ def _fmt(value: Any) -> str:
     if isinstance(value, float):
         return f"{value:.3f}"
     return str(value)
+
+
+def _all_registry_targets(
+    config: AppConfig,
+    *,
+    registry: TargetRegistry | None,
+) -> list[str]:
+    if config.labeling.mode not in MULTICLASS_LABEL_MODES:
+        raise ValueError(
+            "--all-targets requires a multiclass label mode "
+            "(multiclass_known_targets_only or multiclass_with_other)"
+        )
+    if registry is None:
+        if config.target_registry_path is None:
+            raise ValueError("--all-targets requires target_registry_path")
+        registry = TargetRegistry.from_file(config.target_registry_path)
+    target_classes = sorted(registry.enabled_target_ids())
+    if not target_classes:
+        raise ValueError("--all-targets found no enabled targets in the target registry")
+    return target_classes
+
+
+def _default_presence_target_class(config: AppConfig) -> str:
+    if config.labeling.mode in {"binary_one_vs_rest", "per_target_binary"}:
+        return config.labeling.positive_label
+    return config.labeling.target_id or config.labeling.positive_label

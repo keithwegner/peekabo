@@ -85,6 +85,11 @@ class WindowConfig(BaseModel):
     max_probability_threshold: float = 0.8
 
 
+class PresenceConfig(BaseModel):
+    target_classes: list[str] = Field(default_factory=list)
+    all_targets: bool = False
+
+
 class ComparisonConfig(BaseModel):
     models: list[str] = Field(default_factory=lambda: list(MODEL_MAPPINGS))
     train_fractions: list[float] = Field(default_factory=lambda: [0.01, 0.1, 0.5, 0.9])
@@ -125,6 +130,7 @@ class AppConfig(BaseModel):
     sampling: SamplingConfig = Field(default_factory=SamplingConfig)
     split: SplitConfig = Field(default_factory=SplitConfig)
     windowing: WindowConfig = Field(default_factory=WindowConfig)
+    presence: PresenceConfig = Field(default_factory=PresenceConfig)
     comparison: ComparisonConfig = Field(default_factory=ComparisonConfig)
 
     @model_validator(mode="after")
