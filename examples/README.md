@@ -5,9 +5,10 @@ Generate a deterministic synthetic Radiotap/802.11 capture and run the full demo
 ```bash
 python examples/generate_synthetic_capture.py
 peekaboo run --config configs/synthetic-demo.yaml
+peekaboo compare --config configs/synthetic-demo.yaml
 ```
 
-The generated capture is written to `examples/captures/synthetic-demo.pcap`, which is ignored by Git. The demo writes its Parquet datasets, model checkpoint, metrics, rolling summaries, live-style replay JSONL streams, `run_manifest.json`, `run_summary.md`, and Markdown report under `runs/synthetic-demo/`, which is also ignored by Git.
+The generated capture is written to `examples/captures/synthetic-demo.pcap`, which is ignored by Git. The demo writes its Parquet datasets, model checkpoint, metrics, rolling summaries, live-style replay JSONL streams, `run_manifest.json`, `run_summary.md`, Markdown report, and aggregate comparison outputs under `runs/synthetic-demo/`, which is also ignored by Git. Synthetic comparison results are onboarding smoke evidence only, not real-world wireless performance evidence.
 
 To run the same workflow manually one command at a time:
 
@@ -22,6 +23,7 @@ peekaboo eval-holdout --config configs/synthetic-demo.yaml
 peekaboo classify-file --config configs/synthetic-demo.yaml
 peekaboo presence-replay --config configs/synthetic-demo.yaml
 peekaboo report --config configs/synthetic-demo.yaml
+peekaboo compare --config configs/synthetic-demo.yaml
 ```
 
 For real authorized monitor-mode captures, place PCAP or PCAPNG files under `examples/captures/`, then point a config at them. The repository intentionally does not include real wireless captures.

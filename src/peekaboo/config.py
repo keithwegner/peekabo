@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from peekaboo.models.registry import MODEL_MAPPINGS
 
 
 class InputConfig(BaseModel):
@@ -83,6 +85,33 @@ class WindowConfig(BaseModel):
     max_probability_threshold: float = 0.8
 
 
+class ComparisonConfig(BaseModel):
+    models: list[str] = Field(default_factory=lambda: list(MODEL_MAPPINGS))
+    train_fractions: list[float] = Field(default_factory=lambda: [0.01, 0.1, 0.5, 0.9])
+    output_dir: Path | None = None
+    prepare_if_missing: bool = True
+
+    @field_validator("models")
+    @classmethod
+    def validate_models(cls, value: list[str]) -> list[str]:
+        unknown = sorted(set(value) - set(MODEL_MAPPINGS))
+        if unknown:
+            raise ValueError(f"Unsupported comparison model id(s): {', '.join(unknown)}")
+        if not value:
+            raise ValueError("comparison.models must include at least one model id")
+        return value
+
+    @field_validator("train_fractions")
+    @classmethod
+    def validate_train_fractions(cls, value: list[float]) -> list[float]:
+        if not value:
+            raise ValueError("comparison.train_fractions must include at least one fraction")
+        invalid = [fraction for fraction in value if fraction <= 0 or fraction >= 1]
+        if invalid:
+            raise ValueError("comparison.train_fractions values must satisfy 0 < fraction < 1")
+        return value
+
+
 class AppConfig(BaseModel):
     input: InputConfig = Field(default_factory=InputConfig)
     target_registry_path: Path | None = None
@@ -96,6 +125,13 @@ class AppConfig(BaseModel):
     sampling: SamplingConfig = Field(default_factory=SamplingConfig)
     split: SplitConfig = Field(default_factory=SplitConfig)
     windowing: WindowConfig = Field(default_factory=WindowConfig)
+    comparison: ComparisonConfig = Field(default_factory=ComparisonConfig)
+
+    @model_validator(mode="after")
+    def default_comparison_output_dir(self) -> AppConfig:
+        if self.comparison.output_dir is None:
+            self.comparison.output_dir = self.output_dir / "comparison"
+        return self
 
 
 def _validate_config(data: dict[str, Any]) -> AppConfig:

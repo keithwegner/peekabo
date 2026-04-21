@@ -7,6 +7,7 @@ def test_cli_help_smoke():
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "run" in result.output
+    assert "compare" in result.output
     assert "setup" in result.output
     assert "inspect" in result.output
     assert "ingest" in result.output
