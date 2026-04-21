@@ -60,7 +60,7 @@ peekaboo setup \
 
 ## Try It With Synthetic Data
 
-The repository includes a generator for a deterministic synthetic Radiotap/802.11 capture. It contains fake MAC addresses and fake frame metadata, so it is safe to use as a first-run demo. The synthetic traffic is intentionally learnable from allowed header-level features such as rate, signal, subtype, and frame size; it is not real-world performance evidence.
+The repository includes a generator for a deterministic synthetic Radiotap/802.11 capture. It contains fake MAC addresses and fake frame metadata, so it is safe to use as a first-run demo. The default 120-frame story includes a phone arriving, quiet background chatter, a phone browsing burst, TV streaming, weak edge-of-house traffic, retries, channel changes, RSSI drift, and multiple fake destinations. The synthetic traffic is intentionally learnable from allowed header-level features such as rate, signal, subtype, and frame size; it is not real-world performance evidence.
 
 ```bash
 python examples/generate_synthetic_capture.py
