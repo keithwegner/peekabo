@@ -107,7 +107,9 @@ def summarize_presence_window(
     positive_ratio = len(positives) / len(rows) if rows else None
     mean_probability = mean(probabilities) if probabilities else None
     max_probability = max(probabilities) if probabilities else None
-    state = _presence_state(len(rows), positive_ratio, mean_probability, max_probability, config)
+    state = presence_state_from_stats(
+        len(rows), positive_ratio, mean_probability, max_probability, config
+    )
     return RollingPresenceRow(
         window_start=window_start,
         window_end=window_end,
@@ -118,6 +120,22 @@ def summarize_presence_window(
         positive_prediction_ratio=positive_ratio,
         state=state,
     ).to_dict()
+
+
+def presence_state_from_stats(
+    frame_count: int,
+    positive_ratio: float | None,
+    mean_probability: float | None,
+    max_probability: float | None,
+    config: WindowConfig,
+) -> str:
+    return _presence_state(
+        frame_count,
+        positive_ratio,
+        mean_probability,
+        max_probability,
+        config,
+    )
 
 
 def _target_probability(row: dict[str, Any], target_class: str) -> float:

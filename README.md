@@ -59,14 +59,18 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 ```bash
 python examples/generate_synthetic_capture.py
 peekaboo run --config configs/synthetic-demo.yaml
+peekaboo calibrate-presence --config configs/synthetic-demo.yaml
 peekaboo compare --config configs/synthetic-demo.yaml
 peekaboo run --config configs/synthetic-multitarget.yaml
+peekaboo calibrate-presence --config configs/synthetic-multitarget.yaml --all-targets
 peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targets
 ```
 
 The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
 
 `peekaboo compare` runs the configured paper-style model/fraction comparison over the labeled synthetic dataset and writes aggregate results under `runs/synthetic-demo/comparison/`. Synthetic comparison results are useful for smoke testing and onboarding only; they are not real-world performance evidence.
+
+`peekaboo calibrate-presence` uses labeled predictions, or regenerates them from the labeled dataset and checkpoint when needed, to recommend `windowing` thresholds. It writes `calibration_manifest.json`, `calibration_results.csv`, `calibration_results.json`, `calibration_report.md`, `recommended_windowing.yaml`, and best-effort charts under `runs/synthetic-demo/calibration/`. Copy the recommended `windowing` values into an authorized real-capture config before relying on `presence-live`; synthetic calibration is workflow smoke evidence only.
 
 `configs/synthetic-multitarget.yaml` labels the same synthetic capture as multiclass traffic for `iphone_5_user1`, `lg_tv`, and `other`. Its presence config tracks all enabled registry targets, so replay/live-style output emits separate presence windows for each known target.
 
@@ -83,6 +87,7 @@ peekaboo eval-holdout --config configs/synthetic-demo.yaml
 peekaboo classify-file --config configs/synthetic-demo.yaml
 peekaboo presence-replay --config configs/synthetic-demo.yaml
 peekaboo report --config configs/synthetic-demo.yaml
+peekaboo calibrate-presence --config configs/synthetic-demo.yaml
 peekaboo compare --config configs/synthetic-demo.yaml
 ```
 
@@ -100,12 +105,14 @@ After the full demo, `runs/synthetic-demo/` should include:
 - `rolling.parquet`: rolling target-presence summaries
 - `replay_predictions.jsonl` and `replay_presence.jsonl`: live-style replay output
 - `report.md`: Markdown experiment report
+- `calibration/`: presence threshold sweep results, report, recommended windowing YAML, and charts
 - `comparison/`: aggregate model/fraction comparison results, report, and trend charts
 
 For multi-target presence, run:
 
 ```bash
 peekaboo run --config configs/synthetic-multitarget.yaml
+peekaboo calibrate-presence --config configs/synthetic-multitarget.yaml --all-targets
 peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targets
 ```
 
@@ -140,6 +147,7 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 ```bash
 peekaboo run
 peekaboo compare
+peekaboo calibrate-presence
 peekaboo setup
 peekaboo ingest
 peekaboo inspect
@@ -170,6 +178,12 @@ Comparison runs:
 - `peekaboo compare --config configs/synthetic-demo.yaml`: compare configured model IDs and train fractions over a labeled dataset
 - `peekaboo compare --models leveraging_bag --models adaptive_hoeffding_tree --train-fractions 0.1 --train-fractions 0.9`: compare a smaller explicit matrix
 - `peekaboo compare --no-prepare`: require an existing labeled dataset instead of preparing missing inputs
+
+Presence calibration:
+
+- `peekaboo calibrate-presence --config configs/synthetic-demo.yaml`: sweep presence thresholds and recommend `windowing` values
+- `peekaboo calibrate-presence --all-targets --config configs/synthetic-multitarget.yaml`: calibrate all enabled known targets in a multiclass config
+- `peekaboo calibrate-presence --objective mcc --force`: choose thresholds by MCC and overwrite previous calibration artifacts
 
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.
 

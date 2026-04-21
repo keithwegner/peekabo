@@ -90,6 +90,63 @@ class PresenceConfig(BaseModel):
     all_targets: bool = False
 
 
+class CalibrationConfig(BaseModel):
+    objective: str = "f1"
+    present_ratio_thresholds: list[float] = Field(
+        default_factory=lambda: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    )
+    mean_probability_thresholds: list[float] = Field(
+        default_factory=lambda: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    )
+    max_probability_thresholds: list[float] = Field(
+        default_factory=lambda: [0.5, 0.6, 0.7, 0.8, 0.9]
+    )
+    window_types: list[str] = Field(default_factory=lambda: ["frame_count", "time"])
+    min_truth_frames: int = 1
+    prepare_predictions_if_missing: bool = True
+    output_dir: Path | None = None
+
+    @field_validator("objective")
+    @classmethod
+    def validate_objective(cls, value: str) -> str:
+        allowed = {"f1", "mcc", "precision", "recall"}
+        if value not in allowed:
+            raise ValueError(f"calibration.objective must be one of {', '.join(sorted(allowed))}")
+        return value
+
+    @field_validator(
+        "present_ratio_thresholds",
+        "mean_probability_thresholds",
+        "max_probability_thresholds",
+    )
+    @classmethod
+    def validate_thresholds(cls, value: list[float]) -> list[float]:
+        if not value:
+            raise ValueError("calibration threshold grids must not be empty")
+        invalid = [threshold for threshold in value if threshold < 0 or threshold > 1]
+        if invalid:
+            raise ValueError("calibration threshold values must satisfy 0 <= threshold <= 1")
+        return sorted(set(value))
+
+    @field_validator("window_types")
+    @classmethod
+    def validate_window_types(cls, value: list[str]) -> list[str]:
+        allowed = {"frame_count", "time"}
+        if not value:
+            raise ValueError("calibration.window_types must include at least one window type")
+        unknown = sorted(set(value) - allowed)
+        if unknown:
+            raise ValueError(f"Unsupported calibration window type(s): {', '.join(unknown)}")
+        return list(dict.fromkeys(value))
+
+    @field_validator("min_truth_frames")
+    @classmethod
+    def validate_min_truth_frames(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("calibration.min_truth_frames must be greater than 0")
+        return value
+
+
 class ComparisonConfig(BaseModel):
     models: list[str] = Field(default_factory=lambda: list(MODEL_MAPPINGS))
     train_fractions: list[float] = Field(default_factory=lambda: [0.01, 0.1, 0.5, 0.9])
@@ -131,10 +188,13 @@ class AppConfig(BaseModel):
     split: SplitConfig = Field(default_factory=SplitConfig)
     windowing: WindowConfig = Field(default_factory=WindowConfig)
     presence: PresenceConfig = Field(default_factory=PresenceConfig)
+    calibration: CalibrationConfig = Field(default_factory=CalibrationConfig)
     comparison: ComparisonConfig = Field(default_factory=ComparisonConfig)
 
     @model_validator(mode="after")
-    def default_comparison_output_dir(self) -> AppConfig:
+    def default_derived_output_dirs(self) -> AppConfig:
+        if self.calibration.output_dir is None:
+            self.calibration.output_dir = self.output_dir / "calibration"
         if self.comparison.output_dir is None:
             self.comparison.output_dir = self.output_dir / "comparison"
         return self

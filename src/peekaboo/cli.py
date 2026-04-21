@@ -7,6 +7,7 @@ from typing import Annotated, Any
 
 import typer
 
+from peekaboo.calibration import CalibrationError, run_presence_calibration
 from peekaboo.capture.inspect import inspect_capture_paths, write_inspection_markdown
 from peekaboo.capture.live import iter_live_records
 from peekaboo.capture.sources import expand_input_paths, iter_packet_records
@@ -123,6 +124,47 @@ def compare_command(
         raise typer.Exit(1) from exc
     typer.echo(
         f"Comparison {manifest['status']} with {manifest['result_count']} result row(s). "
+        f"Wrote {manifest['artifacts']['manifest']}"
+    )
+
+
+@app.command("calibrate-presence")
+def calibrate_presence(
+    config: ConfigOption,
+    input_predictions: Annotated[Path | None, typer.Option("--input-predictions")] = None,
+    input_labeled: Annotated[Path | None, typer.Option("--input-labeled")] = None,
+    output_dir: Annotated[Path | None, typer.Option("--output-dir")] = None,
+    target_class: Annotated[
+        list[str] | None,
+        typer.Option("--target-class", help="Target class to calibrate; repeat for many."),
+    ] = None,
+    all_targets: Annotated[
+        bool | None,
+        typer.Option("--all-targets/--single-target", help="Calibrate all enabled targets."),
+    ] = None,
+    objective: Annotated[str | None, typer.Option("--objective")] = None,
+    force: Annotated[bool, typer.Option("--force")] = False,
+    quiet: Annotated[bool, typer.Option("--quiet")] = False,
+) -> None:
+    try:
+        manifest = run_presence_calibration(
+            config,
+            input_predictions=input_predictions,
+            input_labeled=input_labeled,
+            output_dir=output_dir,
+            target_classes=target_class,
+            all_targets=all_targets,
+            objective=objective,
+            force=force,
+            quiet=quiet,
+            progress=typer.echo,
+        )
+    except CalibrationError as exc:
+        typer.secho(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(
+        f"Calibration {manifest['status']} with {manifest['result_count']} result row(s). "
         f"Wrote {manifest['artifacts']['manifest']}"
     )
 
