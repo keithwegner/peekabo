@@ -8,6 +8,7 @@ def test_cli_help_smoke():
     assert result.exit_code == 0
     assert "run" in result.output
     assert "compare" in result.output
+    assert "calibrate-presence" in result.output
     assert "setup" in result.output
     assert "inspect" in result.output
     assert "ingest" in result.output

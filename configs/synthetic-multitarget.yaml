@@ -70,3 +70,27 @@ windowing:
 presence:
   target_classes: []
   all_targets: true
+
+calibration:
+  objective: f1
+  present_ratio_thresholds:
+    - 0.2
+    - 0.3
+    - 0.4
+    - 0.5
+  mean_probability_thresholds:
+    - 0.2
+    - 0.3
+    - 0.4
+    - 0.5
+  max_probability_thresholds:
+    - 0.6
+    - 0.7
+    - 0.8
+    - 0.9
+  window_types:
+    - frame_count
+    - time
+  min_truth_frames: 1
+  prepare_predictions_if_missing: true
+  output_dir: runs/synthetic-multitarget/calibration
