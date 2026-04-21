@@ -20,6 +20,13 @@ Run the same checks used by CI:
 make check PYTHON=.venv/bin/python
 ```
 
+`make test` and `make check` both report coverage for `src/peekaboo` and fail if coverage drops below the configured gate. To generate an HTML coverage report:
+
+```bash
+make coverage PYTHON=.venv/bin/python
+open htmlcov/index.html
+```
+
 Useful individual commands:
 
 ```bash
