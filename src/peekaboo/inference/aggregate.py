@@ -62,6 +62,30 @@ def rolling_aggregates(
     config: WindowConfig,
 ) -> list[dict[str, Any]]:
     rows = list(predictions)
+    return rolling_aggregates_for_targets(rows, target_classes=[target_class], config=config)
+
+
+def rolling_aggregates_for_targets(
+    predictions: Iterable[dict[str, Any]],
+    *,
+    target_classes: Iterable[str],
+    config: WindowConfig,
+) -> list[dict[str, Any]]:
+    rows = list(predictions)
+    output: list[dict[str, Any]] = []
+    for target_class in target_classes:
+        output.extend(
+            _rolling_aggregates_one_target(rows, target_class=target_class, config=config)
+        )
+    return output
+
+
+def _rolling_aggregates_one_target(
+    rows: list[dict[str, Any]],
+    *,
+    target_class: str,
+    config: WindowConfig,
+) -> list[dict[str, Any]]:
     frame_rows = rolling_frame_count(rows, target_class=target_class, config=config)
     for row in frame_rows:
         row["window_type"] = "frame_count"
