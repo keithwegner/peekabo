@@ -65,6 +65,7 @@ The repository includes a generator for a deterministic synthetic Radiotap/802.1
 ```bash
 python examples/generate_synthetic_capture.py
 peekaboo run --config configs/synthetic-demo.yaml
+peekaboo dashboard --config configs/synthetic-demo.yaml
 peekaboo calibrate-presence --config configs/synthetic-demo.yaml
 peekaboo compare --config configs/synthetic-demo.yaml
 peekaboo run --config configs/synthetic-multitarget.yaml
@@ -75,6 +76,8 @@ peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targe
 The generated capture is written under `examples/captures/`, and pipeline outputs are written under `runs/`. Both locations are ignored by Git so real captures and generated datasets are not accidentally committed.
 
 `peekaboo compare` runs the configured paper-style model/fraction comparison over the labeled synthetic dataset and writes aggregate results under `runs/synthetic-demo/comparison/`. Synthetic comparison results are useful for smoke testing and onboarding only; they are not real-world performance evidence.
+
+`peekaboo dashboard` writes a static, self-contained, local HTML overview to `runs/synthetic-demo/dashboard/index.html`. It reads existing run artifacts only, requires no web server, and is safe to open locally because it does not perform capture, live monitoring, decryption, payload inspection, probing, injection, adapter setup, or channel hopping.
 
 `peekaboo calibrate-presence` uses labeled predictions, or regenerates them from the labeled dataset and checkpoint when needed, to recommend `windowing` thresholds. It writes `calibration_manifest.json`, `calibration_results.csv`, `calibration_results.json`, `calibration_report.md`, `recommended_windowing.yaml`, and best-effort charts under `runs/synthetic-demo/calibration/`. Copy the recommended `windowing` values into an authorized real-capture config before relying on `presence-live`; synthetic calibration is workflow smoke evidence only.
 
@@ -93,6 +96,7 @@ peekaboo eval-holdout --config configs/synthetic-demo.yaml
 peekaboo classify-file --config configs/synthetic-demo.yaml
 peekaboo presence-replay --config configs/synthetic-demo.yaml
 peekaboo report --config configs/synthetic-demo.yaml
+peekaboo dashboard --config configs/synthetic-demo.yaml
 peekaboo calibrate-presence --config configs/synthetic-demo.yaml
 peekaboo compare --config configs/synthetic-demo.yaml
 ```
@@ -111,6 +115,7 @@ After the full demo, `runs/synthetic-demo/` should include:
 - `rolling.parquet`: rolling target-presence summaries
 - `replay_predictions.jsonl` and `replay_presence.jsonl`: live-style replay output
 - `report.md`: Markdown experiment report
+- `dashboard/index.html`: static local run dashboard
 - `calibration/`: presence threshold sweep results, report, recommended windowing YAML, and charts
 - `comparison/`: aggregate model/fraction comparison results, report, and trend charts
 
@@ -154,6 +159,7 @@ The abstraction leaves room for a later MOA adapter if strict parity is required
 peekaboo run
 peekaboo compare
 peekaboo calibrate-presence
+peekaboo dashboard
 peekaboo setup
 peekaboo ingest
 peekaboo inspect
@@ -191,6 +197,12 @@ Presence calibration:
 - `peekaboo calibrate-presence --all-targets --config configs/synthetic-multitarget.yaml`: calibrate all enabled known targets in a multiclass config
 - `peekaboo calibrate-presence --objective mcc --force`: choose thresholds by MCC and overwrite previous calibration artifacts
 
+Static dashboard:
+
+- `peekaboo dashboard --config configs/synthetic-demo.yaml`: generate `dashboard/index.html` for an existing run
+- `peekaboo dashboard --force`: overwrite a previously generated dashboard
+- The dashboard is a static local file over existing artifacts; it does not start a server or rerun pipeline stages.
+
 `classify-live` is passive-only. It reads from a preconfigured monitor-mode interface and does not perform channel hopping or interface setup.
 
 `presence-live` is also passive-only. It loads a trained checkpoint, reads from an already configured monitor-mode interface, prints concise target-presence state changes, and writes streaming JSONL outputs. Use `presence-replay` on prepared feature rows to test the same runtime behavior without live wireless hardware.
@@ -212,3 +224,4 @@ Typical runs create:
 - JSON/CSV metrics
 - confusion matrices and plots
 - Markdown experiment reports
+- static HTML dashboards
