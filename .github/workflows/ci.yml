@@ -42,4 +42,11 @@ jobs:
         run: python -m compileall -q src tests
 
       - name: Test with coverage
-        run: python -m pytest -q
+        run: python -m pytest -q --cov-report=xml
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false

@@ -1,6 +1,7 @@
 # peekaboo
 
 [![CI](https://github.com/keithwegner/peekaboo/actions/workflows/ci.yml/badge.svg)](https://github.com/keithwegner/peekaboo/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/keithwegner/peekaboo/branch/main/graph/badge.svg)](https://codecov.io/gh/keithwegner/peekaboo)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
 [![Ruff](https://img.shields.io/badge/lint-ruff-46a6ff)](https://docs.astral.sh/ruff/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./pyproject.toml)

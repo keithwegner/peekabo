@@ -16,7 +16,7 @@ check: lint
 	$(PYTHON) -m pytest -q
 
 coverage:
-	$(PYTHON) -m pytest -q --cov-report=term-missing --cov-report=html
+	$(PYTHON) -m pytest -q --cov-report=term-missing --cov-report=html --cov-report=xml
 
 build:
 	$(PYTHON) -m build
