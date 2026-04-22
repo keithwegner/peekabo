@@ -1,4 +1,4 @@
-"""Generate the synthetic capture used by the example config."""
+"""Generate the richer deterministic synthetic capture used by the example configs."""
 
 from __future__ import annotations
 
@@ -24,7 +24,10 @@ def main() -> None:
         "--packet-count",
         type=int,
         default=120,
-        help="Number of synthetic packets to generate.",
+        help=(
+            "Number of synthetic packets to generate. The first 120 packets form one "
+            "complete fake traffic story; larger values repeat it with later timestamps."
+        ),
     )
     args = parser.parse_args()
     output = write_synthetic_capture(args.output, packet_count=args.packet_count)

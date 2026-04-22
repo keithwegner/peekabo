@@ -1,6 +1,6 @@
 # Examples
 
-Generate a deterministic synthetic Radiotap/802.11 capture and run the full demo pipeline:
+Generate a richer deterministic synthetic Radiotap/802.11 capture and run the full demo pipeline:
 
 ```bash
 python examples/generate_synthetic_capture.py
@@ -13,7 +13,7 @@ peekaboo calibrate-presence --config configs/synthetic-multitarget.yaml --all-ta
 peekaboo presence-replay --config configs/synthetic-multitarget.yaml --all-targets
 ```
 
-The generated capture is written to `examples/captures/synthetic-demo.pcap`, which is ignored by Git. The demo writes its Parquet datasets, model checkpoint, metrics, rolling summaries, live-style replay JSONL streams, `run_manifest.json`, `run_summary.md`, Markdown report, static HTML dashboard, calibration outputs, and aggregate comparison outputs under `runs/synthetic-demo/`, which is also ignored by Git. Synthetic calibration and comparison results are onboarding smoke evidence only, not real-world wireless performance evidence.
+The generated capture is written to `examples/captures/synthetic-demo.pcap`, which is ignored by Git. Its default 120-frame fake traffic story includes a phone arriving, quiet background chatter, a phone browsing burst, TV streaming, weak edge-of-house traffic, retries, channel changes, RSSI drift, and multiple fake destinations. The demo writes its Parquet datasets, model checkpoint, metrics, rolling summaries, live-style replay JSONL streams, `run_manifest.json`, `run_summary.md`, Markdown report, static HTML dashboard, calibration outputs, and aggregate comparison outputs under `runs/synthetic-demo/`, which is also ignored by Git. Synthetic calibration and comparison results are onboarding smoke evidence only, not real-world wireless performance evidence.
 
 The multi-target demo writes separate multiclass outputs under `runs/synthetic-multitarget/` and emits presence rows for each enabled known target in `configs/targets.yaml`.
 
