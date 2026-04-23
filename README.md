@@ -19,6 +19,26 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
+## Run With Docker
+
+Docker is the quickest way to run the CLI, synthetic demo, and offline/replay workflows without installing Python locally:
+
+```bash
+docker compose run --rm -T generate-synthetic
+docker compose run --rm -T peekaboo run --config configs/synthetic-demo.yaml
+docker compose run --rm -T peekaboo dashboard --config configs/synthetic-demo.yaml
+```
+
+The published image is available from GHCR after the Docker workflow has run on `main`:
+
+```bash
+docker run --rm ghcr.io/keithwegner/peekaboo:latest --help
+```
+
+The Compose file bind-mounts `./configs`, `./examples/captures`, and `./runs` into the container. Put authorized local PCAP/PCAPNG captures under `examples/captures/` or point a mounted config at them; generated datasets, reports, dashboards, and models are written under `runs/`.
+
+Docker v1 is for CLI, offline capture, synthetic demo, replay, report, comparison, calibration, and dashboard workflows. It does not configure adapters, channel hop, decrypt traffic, inspect payloads, inject frames, transmit probes, or provide privileged live monitor-mode capture orchestration.
+
 ## Local Checks
 
 ```bash

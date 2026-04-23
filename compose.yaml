@@ -1,0 +1,18 @@
+services:
+  peekaboo:
+    build: .
+    image: peekaboo:dev
+    volumes:
+      - ./configs:/app/configs
+      - ./examples/captures:/app/examples/captures
+      - ./runs:/app/runs
+
+  generate-synthetic:
+    build: .
+    image: peekaboo:dev
+    entrypoint: ["python"]
+    command: ["examples/generate_synthetic_capture.py"]
+    volumes:
+      - ./configs:/app/configs
+      - ./examples/captures:/app/examples/captures
+      - ./runs:/app/runs
