@@ -20,7 +20,7 @@ dependencies = [
   "river>=0.24.2",
   "scapy>=2.5",
   "scikit-learn>=1.4",
-  "typer>=0.24.1",
+  "typer>=0.25.0",
 ]
 
 [project.optional-dependencies]
