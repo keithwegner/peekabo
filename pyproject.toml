@@ -12,7 +12,7 @@ license = { text = "MIT" }
 dependencies = [
   "matplotlib>=3.10.8",
   "numpy>=1.26",
-  "polars>=0.20",
+  "polars>=1.40.1",
   "pyarrow>=15",
   "pydantic>=2.6",
   "pydantic-settings>=2.13.1",
