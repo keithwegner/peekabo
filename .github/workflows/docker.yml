@@ -30,7 +30,7 @@ jobs:
 
       - name: Build PR smoke image
         if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v7.1.0
+        uses: docker/build-push-action@v7.2.0
         with:
           context: .
           load: true
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build and publish image
         if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v7.1.0
+        uses: docker/build-push-action@v7.2.0
         with:
           context: .
           push: true
